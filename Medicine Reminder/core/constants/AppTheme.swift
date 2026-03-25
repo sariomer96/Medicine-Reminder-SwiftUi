@@ -8,21 +8,21 @@
 import SwiftUI
 
 enum AppTheme {
-    static let backgroundTop = Color(red: 0.94, green: 0.98, blue: 0.97)
-    static let backgroundBottom = Color(red: 0.87, green: 0.95, blue: 0.93)
+    static let backgroundTop = Color(hex: "#F0FAF7")
+    static let backgroundBottom = Color(hex: "#DEF2ED")
 
-    static let primary = Color(red: 0.08, green: 0.48, blue: 0.46)
-    static let primarySoft = Color(red: 0.62, green: 0.84, blue: 0.80)
-    static let accent = Color(red: 0.98, green: 0.73, blue: 0.35)
+    static let primary = Color(hex: "#147A75")
+    static let primarySoft = Color(hex: "#9ED6CC")
+    static let accent = Color(hex: "#FABA59")
 
-    static let surface = Color.white
-    static let surfaceMuted = Color(red: 0.93, green: 0.97, blue: 0.96)
+    static let surface = Color(hex: "#FFFFFF")
+    static let surfaceMuted = Color(hex: "#EDF7F58A")
 
-    static let textPrimary = Color(red: 0.11, green: 0.17, blue: 0.18)
-    static let textSecondary = Color(red: 0.36, green: 0.46, blue: 0.47)
-    static let border = Color(red: 0.80, green: 0.89, blue: 0.87)
-    static let success = Color(red: 0.22, green: 0.65, blue: 0.44)
-    static let danger = Color(red: 0.83, green: 0.37, blue: 0.34)
+    static let textPrimary = Color(hex: "#1C2B2E")
+    static let textSecondary = Color(hex: "#5C7578")
+    static let border = Color(hex: "#CCE3DE")
+    static let success = Color(hex: "#38A670")
+    static let danger = Color(hex: "#D45E57")
 
     static let appBackground = LinearGradient(
         colors: [backgroundTop, backgroundBottom],

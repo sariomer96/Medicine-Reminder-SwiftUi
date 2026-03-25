@@ -18,14 +18,19 @@ struct LoginView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Tekrar hos geldiniz")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                    VStack(alignment: .center, spacing: 12) {
+                        Text("Hos Geldiniz")
+                            .font(.system(size: 32, weight: .medium, design: .rounded))
                             .foregroundStyle(AppTheme.textPrimary)
 
-                        Text("Ilac hatirlaticilarinizi ve gunluk takibinizi guvenli sekilde yonetin.")
-                            .font(.subheadline)
-                            .foregroundStyle(AppTheme.textSecondary)
+                            
+
+                        Image("medicine")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 120, height: 120)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                         
                     }
 
                     VStack(alignment: .leading, spacing: 18) {
@@ -60,6 +65,16 @@ struct LoginView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.plain)
+                        
+                        Button {
+                        } label: {
+                            Text("Kayit Ol")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(AppTheme.primary)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top,16)
                     }
                     .padding(22)
                     .background(AppTheme.surface)
@@ -70,16 +85,7 @@ struct LoginView: View {
                     )
                     .shadow(color: AppTheme.primary.opacity(0.10), radius: 16, x: 0, y: 10)
 
-                    VStack(alignment: .leading, spacing: 10) {
-                        Label("Hatirlaticilariniz guvende kalir", systemImage: "shield.lefthalf.filled")
-                        Label("Bakimi kolay ve sade giris deneyimi", systemImage: "heart.text.square.fill")
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(AppTheme.primary)
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppTheme.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    
                 }
                 .padding(24)
             }
@@ -87,49 +93,6 @@ struct LoginView: View {
     }
 }
 
-private struct AuthField: View {
-    let title: String
-    let placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(AppTheme.textPrimary)
-
-            TextField(placeholder, text: $text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(AppTheme.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
-    }
-}
-
-private struct AuthSecureField: View {
-    let title: String
-    let placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(AppTheme.textPrimary)
-
-            SecureField(placeholder, text: $text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(AppTheme.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }
-    }
-}
 
 #Preview {
     LoginView()
