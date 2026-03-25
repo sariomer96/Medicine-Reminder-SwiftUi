@@ -28,7 +28,7 @@ struct Medicine_ReminderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LoginView()
                 .tint(AppTheme.primary)
         }
         .modelContainer(sharedModelContainer)

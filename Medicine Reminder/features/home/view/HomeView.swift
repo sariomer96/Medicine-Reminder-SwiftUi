@@ -8,6 +8,11 @@
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var errorMessage: String?
+
+    private let authRepository: AuthRepositoryProtocol = AuthRepository()
+
     var body: some View {
         ZStack {
             AppTheme.appBackground
@@ -15,14 +20,39 @@ struct HomeView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Bugunku Ilaclar")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundStyle(AppTheme.textPrimary)
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Bugunku Ilaclar")
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
+                                .foregroundStyle(AppTheme.textPrimary)
 
-                        Text("Takip, bildirim ve log ekranlari icin temel renk sistemi hazir.")
-                            .font(.subheadline)
-                            .foregroundStyle(AppTheme.textSecondary)
+                            Text("Takip, bildirim ve log ekranlari icin temel renk sistemi hazir.")
+                                .font(.subheadline)
+                                .foregroundStyle(AppTheme.textSecondary)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            signOut()
+                        } label: {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(AppTheme.primary)
+                                .frame(width: 44, height: 44)
+                                .background(AppTheme.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                        .stroke(AppTheme.border, lineWidth: 1)
+                                )
+                        }
+                    }
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -99,6 +129,15 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(AppTheme.border, lineWidth: 1)
         )
+    }
+
+    private func signOut() {
+        do {
+            try authRepository.signOut()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
 

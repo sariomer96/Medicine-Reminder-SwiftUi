@@ -12,6 +12,7 @@
 		175171442F74216C004DBD18 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 175171432F74216C004DBD18 /* FirebaseAnalyticsCore */; };
 		175171462F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport in Frameworks */ = {isa = PBXBuildFile; productRef = 175171452F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport */; };
 		1751719A2F743355004DBD18 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 175171992F743355004DBD18 /* FirebaseFirestore */; };
+		175171F92F74741F004DBD18 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 175171F82F74741F004DBD18 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				175171422F74216C004DBD18 /* FirebaseAnalytics in Frameworks */,
+				175171F92F74741F004DBD18 /* FirebaseAuth in Frameworks */,
 				1751719A2F743355004DBD18 /* FirebaseFirestore in Frameworks */,
 				175171442F74216C004DBD18 /* FirebaseAnalyticsCore in Frameworks */,
 				175171462F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport in Frameworks */,
@@ -91,6 +93,7 @@
 				175171432F74216C004DBD18 /* FirebaseAnalyticsCore */,
 				175171452F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport */,
 				175171992F743355004DBD18 /* FirebaseFirestore */,
+				175171F82F74741F004DBD18 /* FirebaseAuth */,
 			);
 			productName = "Medicine Reminder";
 			productReference = 175171172F73F40C004DBD18 /* Medicine Reminder.app */;
@@ -392,6 +395,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		175171F82F74741F004DBD18 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

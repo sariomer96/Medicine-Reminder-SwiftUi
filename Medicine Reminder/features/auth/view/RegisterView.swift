@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct RegisterView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = RegisterViewModel()
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
@@ -52,16 +54,40 @@ struct RegisterView: View {
                             text: $confirmPassword
                         )
 
+                        if let errorMessage = viewModel.errorMessage {
+                            Text(errorMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                        }
+
                         Button {
+                            Task {
+                                await viewModel.register(
+                                    fullName: fullName,
+                                    email: email,
+                                    password: password,
+                                    confirmPassword: confirmPassword
+                                )
+                            }
                         } label: {
-                            Text("Kayit ol")
-                                .font(.headline)
-                                .foregroundStyle(.white)
+                            Group {
+                                if viewModel.isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(.circular)
+                                        .tint(.white)
+                                } else {
+                                    Text("Kayit ol")
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                }
+                            }
                                 .frame(maxWidth: .infinity)
+                                .frame(height: 24)
                                 .padding(.vertical, 16)
                                 .background(AppTheme.primary)
                                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
+                        .disabled(viewModel.isLoading)
                     }
                     .padding(22)
                     .background(AppTheme.surface)
@@ -76,6 +102,11 @@ struct RegisterView: View {
                 }
                 .padding(24)
                 .padding(.top, 32)
+            }
+        }
+        .onChange(of: viewModel.isRegistered) { _, isRegistered in
+            if isRegistered {
+                dismiss()
             }
         }
     }
