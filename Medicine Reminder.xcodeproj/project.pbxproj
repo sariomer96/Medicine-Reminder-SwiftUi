@@ -6,8 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1751713F2F74205D004DBD18 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1751713E2F74205D004DBD18 /* GoogleService-Info.plist */; };
+		175171422F74216C004DBD18 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 175171412F74216C004DBD18 /* FirebaseAnalytics */; };
+		175171442F74216C004DBD18 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 175171432F74216C004DBD18 /* FirebaseAnalyticsCore */; };
+		175171462F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport in Frameworks */ = {isa = PBXBuildFile; productRef = 175171452F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport */; };
+		1751719A2F743355004DBD18 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 175171992F743355004DBD18 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		175171172F73F40C004DBD18 /* Medicine Reminder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Medicine Reminder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1751713E2F74205D004DBD18 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +32,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				175171422F74216C004DBD18 /* FirebaseAnalytics in Frameworks */,
+				1751719A2F743355004DBD18 /* FirebaseFirestore in Frameworks */,
+				175171442F74216C004DBD18 /* FirebaseAnalyticsCore in Frameworks */,
+				175171462F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +47,8 @@
 			children = (
 				175171192F73F40C004DBD18 /* Medicine Reminder */,
 				175171182F73F40C004DBD18 /* Products */,
+				1751713E2F74205D004DBD18 /* GoogleService-Info.plist */,
+				175171982F743355004DBD18 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -43,6 +58,13 @@
 				175171172F73F40C004DBD18 /* Medicine Reminder.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		175171982F743355004DBD18 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +87,10 @@
 			);
 			name = "Medicine Reminder";
 			packageProductDependencies = (
+				175171412F74216C004DBD18 /* FirebaseAnalytics */,
+				175171432F74216C004DBD18 /* FirebaseAnalyticsCore */,
+				175171452F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport */,
+				175171992F743355004DBD18 /* FirebaseFirestore */,
 			);
 			productName = "Medicine Reminder";
 			productReference = 175171172F73F40C004DBD18 /* Medicine Reminder.app */;
@@ -94,6 +120,9 @@
 			);
 			mainGroup = 1751710E2F73F40C004DBD18;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 175171182F73F40C004DBD18 /* Products */;
 			projectDirPath = "";
@@ -109,6 +138,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1751713F2F74205D004DBD18 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,6 +298,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "sariomer.Medicine-Reminder";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -296,6 +329,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "sariomer.Medicine-Reminder";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -324,6 +360,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		175171412F74216C004DBD18 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		175171432F74216C004DBD18 /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		175171452F74216C004DBD18 /* FirebaseAnalyticsIdentitySupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsIdentitySupport;
+		};
+		175171992F743355004DBD18 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 175171402F74216C004DBD18 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1751710F2F73F40C004DBD18 /* Project object */;
 }
