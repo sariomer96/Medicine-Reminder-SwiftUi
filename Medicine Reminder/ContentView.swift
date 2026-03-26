@@ -15,11 +15,7 @@ struct ContentView: View {
                     Label("Welcome", systemImage: "sparkles")
                 }
 
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "pills")
-                }
-        }
+         }
         .toolbarBackground(AppTheme.surface, for: .tabBar)
     }
 }

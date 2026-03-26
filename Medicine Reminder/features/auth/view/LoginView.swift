@@ -6,14 +6,17 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct LoginView: View {
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("auth.rememberMe") private var storedRememberMe = false
     @AppStorage("auth.rememberedEmail") private var storedRememberedEmail = ""
     @StateObject private var viewModel = LoginViewModel()
     @State private var email = ""
     @State private var password = ""
     @State private var rememberMe = false
+    @State private var hasRestoredSession = false
 
     var body: some View {
         NavigationStack {
@@ -61,7 +64,7 @@ struct LoginView: View {
 
                             Button {
                                 Task {
-                                    await viewModel.login(email: email, password: password)
+                                    await viewModel.login(email: email, password: password, modelContext: modelContext)
                                 }
                             } label: {
                                 Group {
@@ -84,6 +87,7 @@ struct LoginView: View {
                             .disabled(viewModel.isLoading)
 
                             Button {
+                                viewModel.loginAsGuest(modelContext: modelContext)
                             } label: {
                                 Text("Misafir olarak giris yap")
                                     .font(.subheadline.weight(.semibold))
@@ -118,9 +122,13 @@ struct LoginView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
-            HomeView()
+            HomeView(sessionDisplayName: viewModel.sessionDisplayName)
         }
         .onAppear {
+            viewModel.restoreSessionIfNeeded(
+                hasRestoredSession: &hasRestoredSession,
+                modelContext: modelContext
+            )
             rememberMe = storedRememberMe
 
             if storedRememberMe {

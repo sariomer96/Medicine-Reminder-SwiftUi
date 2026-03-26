@@ -25,12 +25,17 @@ final class UserStore {
             .setData(from: user)
     }
 
-    func fetchUser(userId: String) async throws -> UserProfile? {
-        let snapshot = try await db.collection(collectionName)
-            .document(userId)
-            .getDocument()
+    func fetchUser(userId: String) async -> UserProfile? {
+        do {
+            let snapshot = try await db.collection(collectionName)
+                .document(userId)
+                .getDocument()
 
-        return try snapshot.data(as: UserProfile.self)
+            return try snapshot.data(as: UserProfile.self)
+        } catch {
+            print("UserStore.fetchUser failed for \(userId): \(error.localizedDescription)")
+            return nil
+        }
     }
 
     func updateUser(userId: String, name: String, email: String, currentVersion: Int) async throws {

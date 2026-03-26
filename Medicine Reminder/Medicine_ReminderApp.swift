@@ -16,6 +16,9 @@ struct Medicine_ReminderApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            LocalUser.self,
+            LocalMedication.self,
+            LocalMedicationLog.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

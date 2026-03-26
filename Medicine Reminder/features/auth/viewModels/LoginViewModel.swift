@@ -6,12 +6,16 @@
 //
 
 import Foundation
+import SwiftData
+import FirebaseAuth
 
 @MainActor
 final class LoginViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isLoggedIn = false
+    @Published var authenticatedUserId: String?
+    @Published var sessionDisplayName = ""
 
     private let authRepository: AuthRepositoryProtocol
 
@@ -19,7 +23,7 @@ final class LoginViewModel: ObservableObject {
         self.authRepository = authRepository
     }
 
-    func login(email: String, password: String) async {
+    func login(email: String, password: String, modelContext: ModelContext) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -30,15 +34,134 @@ final class LoginViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        authenticatedUserId = nil
+        sessionDisplayName = ""
 
         do {
-            try await authRepository.login(email: trimmedEmail, password: trimmedPassword)
-            isLoggedIn = true
+            let user = try await authRepository.login(email: trimmedEmail, password: trimmedPassword)
+            let sessionName = await fetchSessionDisplayName(
+                userId: user.uid,
+                fallbackEmail: user.email
+            )
+
+            activateSession(
+                userId: user.uid,
+                isGuest: false,
+                displayName: sessionName,
+                modelContext: modelContext
+            )
         } catch {
             errorMessage = error.localizedDescription
             isLoggedIn = false
         }
 
         isLoading = false
+    }
+
+    func loginAsGuest(modelContext: ModelContext) {
+        errorMessage = nil
+        activateSession(userId: "guest", isGuest: true, displayName: "Guest", modelContext: modelContext)
+    }
+
+    func restoreSessionIfNeeded(hasRestoredSession: inout Bool, modelContext: ModelContext) {
+        guard !hasRestoredSession else { return }
+        hasRestoredSession = true
+
+        Task {
+            do {
+                let users = try modelContext.fetch(FetchDescriptor<LocalUser>())
+                let firebaseUser = Auth.auth().currentUser
+
+                if let firebaseUser {
+                    let sessionName = await fetchSessionDisplayName(
+                        userId: firebaseUser.uid,
+                        fallbackEmail: firebaseUser.email
+                    )
+
+                    activateSession(
+                        userId: firebaseUser.uid,
+                        isGuest: false,
+                        displayName: sessionName,
+                        modelContext: modelContext
+                    )
+                    return
+                }
+
+                if let activeGuest = users.first(where: { $0.isGuest && $0.isActive }) {
+                    activateSession(
+                        userId: activeGuest.userId,
+                        isGuest: true,
+                        displayName: "Guest",
+                        modelContext: modelContext
+                    )
+                    return
+                }
+
+                let staleUsers = users.filter { !$0.isGuest && $0.isActive }
+
+                if !staleUsers.isEmpty {
+                    for user in staleUsers {
+                        user.isActive = false
+                    }
+
+                    try modelContext.save()
+                }
+            } catch {
+                errorMessage = "Oturum geri yuklenemedi: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func activateSession(
+        userId: String,
+        isGuest: Bool,
+        displayName: String,
+        modelContext: ModelContext
+    ) {
+        do {
+            let users = try modelContext.fetch(FetchDescriptor<LocalUser>())
+
+            for user in users {
+                user.isActive = false
+            }
+
+            if let existingUser = users.first(where: { $0.userId == userId }) {
+                existingUser.isGuest = isGuest
+                existingUser.isActive = true
+            } else {
+                modelContext.insert(LocalUser(userId: userId, isGuest: isGuest, isActive: true))
+            }
+
+            try modelContext.save()
+            isLoggedIn = true
+            authenticatedUserId = userId
+            sessionDisplayName = displayName
+            errorMessage = nil
+        } catch {
+            errorMessage = "Oturum acilamadi: \(error.localizedDescription)"
+            isLoggedIn = false
+        }
+    }
+
+    private func resolvedSessionDisplayName(userName: String?, fallbackEmail: String?) -> String {
+        let trimmedName = userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if !trimmedName.isEmpty {
+            return trimmedName
+        }
+
+        if let fallbackEmail, !fallbackEmail.isEmpty {
+            return fallbackEmail
+        }
+
+        return "Kullanici"
+    }
+
+    private func fetchSessionDisplayName(userId: String, fallbackEmail: String?) async -> String {
+        let profile = await authRepository.fetchUserProfile(userId: userId)
+        return resolvedSessionDisplayName(
+            userName: profile?.name,
+            fallbackEmail: fallbackEmail
+        )
     }
 }

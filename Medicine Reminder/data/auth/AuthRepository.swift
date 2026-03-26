@@ -38,8 +38,9 @@ enum AuthRepositoryError: LocalizedError {
 }
 
 protocol AuthRepositoryProtocol {
-    func login(email: String, password: String) async throws
-    func register(name: String, email: String, password: String) async throws
+    func login(email: String, password: String) async throws -> User
+    func register(name: String, email: String, password: String) async throws -> String
+    func fetchUserProfile(userId: String) async -> UserProfile?
     func signOut() throws
 }
 
@@ -50,15 +51,16 @@ final class AuthRepository: AuthRepositoryProtocol {
         self.userStore = userStore
     }
 
-    func login(email: String, password: String) async throws {
+    func login(email: String, password: String) async throws -> User  {
         do {
-            try await Auth.auth().signIn(withEmail: email, password: password)
+            let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
+            return authResult.user
         } catch {
             throw mapAuthError(error)
         }
     }
 
-    func register(name: String, email: String, password: String) async throws {
+    func register(name: String, email: String, password: String) async throws -> String {
         let authResult: AuthDataResult
 
         do {
@@ -77,6 +79,12 @@ final class AuthRepository: AuthRepositoryProtocol {
             try? await authResult.user.delete()
             throw error
         }
+
+        return authResult.user.uid
+    }
+
+    func fetchUserProfile(userId: String) async -> UserProfile? {
+        await userStore.fetchUser(userId: userId)
     }
 
     func signOut() throws {

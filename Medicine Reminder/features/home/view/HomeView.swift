@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var errorMessage: String?
-
-    private let authRepository: AuthRepositoryProtocol = AuthRepository()
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel = HomeViewModel()
+    let sessionDisplayName: String
 
     var body: some View {
         ZStack {
@@ -20,36 +21,28 @@ struct HomeView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    HStack(alignment: .top, spacing: 16) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Bugunku Ilaclar")
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
-                                .foregroundStyle(AppTheme.textPrimary)
-
-                            Text("Takip, bildirim ve log ekranlari icin temel renk sistemi hazir.")
-                                .font(.subheadline)
-                                .foregroundStyle(AppTheme.textSecondary)
-                        }
-
-                        Spacer()
+                    HStack(alignment: .top, spacing: 14) {
+                        greetingCard
 
                         Button {
-                            signOut()
+                            if viewModel.signOut(modelContext: modelContext) {
+                                dismiss()
+                            }
                         } label: {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(AppTheme.primary)
                                 .frame(width: 44, height: 44)
                                 .background(AppTheme.surface)
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                                         .stroke(AppTheme.border, lineWidth: 1)
                                 )
                         }
                     }
 
-                    if let errorMessage {
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
                             .font(.footnote)
                             .foregroundStyle(.red)
@@ -102,6 +95,38 @@ struct HomeView: View {
         }
     }
 
+    private var greetingCard: some View {
+        HStack(spacing: 14) {
+          
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Merhaba")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(AppTheme.textSecondary)
+
+                Text(sessionDisplayName)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppTheme.textPrimary)
+                    .lineLimit(1)
+
+                Text("Bugunku ilac planin hazir.")
+                    .font(.footnote)
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppTheme.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(AppTheme.border, lineWidth: 1)
+        )
+        .shadow(color: AppTheme.primary.opacity(0.08), radius: 14, x: 0, y: 8)
+    }
+
     private func summaryCard(title: String, value: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Circle()
@@ -130,17 +155,8 @@ struct HomeView: View {
                 .stroke(AppTheme.border, lineWidth: 1)
         )
     }
-
-    private func signOut() {
-        do {
-            try authRepository.signOut()
-            dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
 }
 
 #Preview {
-    HomeView()
+    HomeView(sessionDisplayName: "Guest")
 }
