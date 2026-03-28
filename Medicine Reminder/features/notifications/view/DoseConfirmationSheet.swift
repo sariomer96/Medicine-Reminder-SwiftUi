@@ -17,6 +17,7 @@ struct DoseConfirmationSheet: View {
 
     @State private var errorMessage: String?
     @State private var isConfirming = false
+    @State private var showSuccessState = false
 
     let logId: String
 
@@ -39,8 +40,9 @@ struct DoseConfirmationSheet: View {
                     .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        headerCard
+                    VStack(alignment: .leading, spacing: 18) {
+                   
+                        contentCard
 
                         if let errorMessage {
                             Text(errorMessage)
@@ -63,91 +65,188 @@ struct DoseConfirmationSheet: View {
         }
     }
 
+ 
+
     @ViewBuilder
-    private var headerCard: some View {
+    private var contentCard: some View {
         if let medicationLog, let medication {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Doz onayi")
-                    .font(.headline)
-                    .foregroundStyle(AppTheme.textSecondary)
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(alignment: .top, spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(AppTheme.heroGradient)
+                            .frame(width: 62, height: 62)
 
-                Text(medication.name)
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppTheme.textPrimary)
+                        Image(systemName: medicationLog.taken ? "checkmark.circle.fill" : "pills.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
 
-                detailRow(title: "Saat", value: formattedDate(medicationLog.scheduledTime))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(formattedShortTime(medicationLog.scheduledTime))
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundStyle(AppTheme.textPrimary)
 
-                let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmedDosage.isEmpty {
-                    detailRow(title: "Doz", value: trimmedDosage)
+                        Text(medication.name)
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(AppTheme.textPrimary)
+                            .lineLimit(2)
+
+                        Text(formattedLongDate(medicationLog.scheduledTime))
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+
+                    Spacer(minLength: 0)
                 }
+
+                HStack(spacing: 10) {
+                    infoChip(
+                        title: "Durum",
+                        value: medicationLog.taken ? "Onaylandi" : "Bekliyor"
+                    )
+
+                    let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmedDosage.isEmpty {
+                        infoChip(title: "Doz", value: trimmedDosage)
+                    }
+                }
+
+                Divider()
+                    .overlay(AppTheme.border)
 
                 if medicationLog.taken {
-                    Text("Bu doz zaten onaylanmis.")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(AppTheme.success)
-                } else {
-                    Button {
-                        confirmDose()
-                    } label: {
-                        Text(isConfirming ? "Kaydediliyor..." : "Bu dozu aldim")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(AppTheme.primary)
-                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(AppTheme.success)
+
+                        Text("Onaylandı.")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(AppTheme.success)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(isConfirming)
-                    .opacity(isConfirming ? 0.7 : 1)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(AppTheme.success.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
+                       
+
+                        ZStack {
+                            Button {
+                                confirmDose()
+                            } label: {
+                                HStack {
+                                    Spacer()
+
+                                    Text(isConfirming ? "Kaydediliyor..." : "Bu dozu aldim")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.white)
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, 15)
+                                .background(AppTheme.primary)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isConfirming || showSuccessState)
+                            .opacity(isConfirming || showSuccessState ? 0.25 : 1)
+
+                            if showSuccessState {
+                                successOverlay
+                                    .transition(.asymmetric(
+                                        insertion: .scale(scale: 0.88).combined(with: .opacity),
+                                        removal: .opacity
+                                    ))
+                            }
+                        }
+                        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: showSuccessState)
+                    }
                 }
             }
-            .padding(22)
+            .padding(24)
             .background(AppTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .stroke(AppTheme.border, lineWidth: 1)
             )
+            .shadow(color: AppTheme.primary.opacity(0.08), radius: 18, x: 0, y: 10)
         } else {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 Text("Doz bulunamadi")
-                    .font(.title3.weight(.bold))
+                    .font(.headline)
                     .foregroundStyle(AppTheme.textPrimary)
 
                 Text("Bu bildirimle bagli doz kaydi artik bulunamiyor veya daha once temizlenmis olabilir.")
                     .font(.footnote)
                     .foregroundStyle(AppTheme.textSecondary)
             }
-            .padding(22)
+            .padding(24)
             .background(AppTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
                     .stroke(AppTheme.border, lineWidth: 1)
             )
         }
     }
 
-    private func detailRow(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func infoChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.footnote.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(AppTheme.textSecondary)
 
             Text(value)
-                .font(.title3.weight(.semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(AppTheme.textPrimary)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(AppTheme.surfaceMuted)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func formattedDate(_ date: Date) -> String {
+    private var successOverlay: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(AppTheme.success)
+                .symbolEffect(.bounce, value: showSuccessState)
+
+            Text("Onaylandi")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(AppTheme.textPrimary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 15)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.94))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(AppTheme.success.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func formattedLongDate(_ date: Date) -> String {
         date.formatted(
             Date.FormatStyle()
                 .weekday(.wide)
                 .day(.twoDigits)
                 .month(.wide)
+                .year(.defaultDigits)
+                .hour(.twoDigits(amPM: .omitted))
+                .minute(.twoDigits)
+        )
+    }
+
+    private func formattedShortTime(_ date: Date) -> String {
+        date.formatted(
+            Date.FormatStyle()
                 .hour(.twoDigits(amPM: .omitted))
                 .minute(.twoDigits)
         )
@@ -166,7 +265,16 @@ struct DoseConfirmationSheet: View {
 
         do {
             try modelContext.save()
-            dismiss()
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                showSuccessState = true
+            }
+
+            Task {
+                try? await Task.sleep(for: .milliseconds(900))
+                await MainActor.run {
+                    dismiss()
+                }
+            }
         } catch {
             errorMessage = "Doz onayi kaydedilemedi: \(error.localizedDescription)"
         }
