@@ -6,17 +6,18 @@
 //
 
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct AddMedicationView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var modelContext
 
     private let weekdaySymbols = ["Pzt", "Sal", "Car", "Per", "Cum", "Cmt", "Paz"]
 
     @StateObject private var viewModel = AddMedicationViewModel()
     @State private var showsSearchSheet = false
     @State private var selectedDays: Set<String> = []
+    @State private var activeToast: AddMedicationToast?
     @State private var dosageTimes = [
         Date.now,
         Calendar.current.date(byAdding: .hour, value: 8, to: Date.now) ?? Date.now
@@ -35,21 +36,20 @@ struct AddMedicationView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     medicationCard
                     scheduleCard
-
-                    if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .font(.footnote)
-                            .foregroundStyle(AppTheme.danger)
-                    }
-
-                    if let infoMessage = viewModel.infoMessage {
-                        Text(infoMessage)
-                            .font(.footnote)
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
                 }
                 .padding(24)
                 .padding(.bottom, 120)
+            }
+
+            if let activeToast {
+                VStack {
+                    toastView(for: activeToast)
+                    Spacer()
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(1)
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -66,9 +66,17 @@ struct AddMedicationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showsSearchSheet) {
             medicationSearchSheet
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(28)
+                .appSheetPresentation()
+        }
+        .onChange(of: viewModel.errorMessage) { errorMessage in
+            guard let errorMessage else { return }
+            showToast(message: errorMessage, style: .error)
+            viewModel.clearErrorMessage()
+        }
+        .onChange(of: viewModel.infoMessage) { infoMessage in
+            guard let infoMessage else { return }
+            showToast(message: infoMessage, style: .info)
+            viewModel.clearInfoMessage()
         }
     }
 
@@ -277,7 +285,7 @@ struct AddMedicationView: View {
     }
 
     private var medicationSearchSheet: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 AppTheme.appBackground
                     .ignoresSafeArea()
@@ -388,14 +396,100 @@ struct AddMedicationView: View {
                 }
                 .padding(24)
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .hiddenNavigationBarCompat()
+        }
+    }
+
+    private func toastView(for toast: AddMedicationToast) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: toast.style.iconName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(toast.style.iconColor)
+
+            Text(toast.message)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(AppTheme.textPrimary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(toast.style.backgroundColor)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(toast.style.borderColor, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 8)
+    }
+
+    private func showToast(message: String, style: AddMedicationToastStyle) {
+        let toast = AddMedicationToast(message: message, style: style)
+
+        withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
+            activeToast = toast
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+            guard activeToast?.id == toast.id else { return }
+
+            withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
+                activeToast = nil
+            }
         }
     }
 
 }
 
+private struct AddMedicationToast: Identifiable, Equatable {
+    let id = UUID()
+    let message: String
+    let style: AddMedicationToastStyle
+}
+
+private enum AddMedicationToastStyle: Equatable {
+    case error
+    case info
+
+    var iconName: String {
+        switch self {
+        case .error:
+            return "exclamationmark.circle.fill"
+        case .info:
+            return "checkmark.circle.fill"
+        }
+    }
+
+    var iconColor: Color {
+        switch self {
+        case .error:
+            return AppTheme.danger
+        case .info:
+            return AppTheme.primary
+        }
+    }
+
+    var backgroundColor: Color {
+        switch self {
+        case .error:
+            return Color.white
+        case .info:
+            return Color.white
+        }
+    }
+
+    var borderColor: Color {
+        switch self {
+        case .error:
+            return AppTheme.danger.opacity(0.24)
+        case .info:
+            return AppTheme.primary.opacity(0.24)
+        }
+    }
+}
+
 #Preview {
-    NavigationStack {
+    NavigationView {
         AddMedicationView()
     }
 }

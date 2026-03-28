@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftData
+import CoreData
 
 @MainActor
 enum LocalMedicationLogBuilder {
@@ -14,7 +14,7 @@ enum LocalMedicationLogBuilder {
         for medication: LocalMedication,
         userId: String,
         syncStatus: String,
-        modelContext: ModelContext,
+        modelContext: NSManagedObjectContext,
         daysAhead: Int = 30
     ) throws {
         let calendar = Calendar.current
@@ -23,7 +23,7 @@ enum LocalMedicationLogBuilder {
             return
         }
 
-        let existingLogs = try modelContext.fetch(FetchDescriptor<LocalMedicationLog>())
+        let existingLogs = try modelContext.fetch(LocalMedicationLog.fetchRequest())
         let existingLogIds = Set(
             existingLogs
                 .filter { $0.medicationId == medication.medicationId }
@@ -44,14 +44,13 @@ enum LocalMedicationLogBuilder {
                 continue
             }
 
-            modelContext.insert(
-                LocalMedicationLog(
+            _ = LocalMedicationLog(
+                context: modelContext,
                     logId: logId,
                     userId: userId,
                     medicationId: medication.medicationId,
                     scheduledTime: scheduledTime,
                     syncStatus: syncStatus
-                )
             )
         }
 
@@ -66,7 +65,7 @@ enum LocalMedicationLogBuilder {
         for medication: LocalMedication,
         userId: String,
         syncStatus: String,
-        modelContext: ModelContext,
+        modelContext: NSManagedObjectContext,
         daysAhead: Int = 30
     ) throws {
         try removeUpcomingLogs(for: medication.medicationId, modelContext: modelContext)
@@ -79,9 +78,9 @@ enum LocalMedicationLogBuilder {
         )
     }
 
-    static func removeUpcomingLogs(for medicationId: String, modelContext: ModelContext) throws {
+    static func removeUpcomingLogs(for medicationId: String, modelContext: NSManagedObjectContext) throws {
         let now = Date()
-        let existingLogs = try modelContext.fetch(FetchDescriptor<LocalMedicationLog>())
+        let existingLogs = try modelContext.fetch(LocalMedicationLog.fetchRequest())
 
         for log in existingLogs where log.medicationId == medicationId && log.scheduledTime >= now {
             modelContext.delete(log)

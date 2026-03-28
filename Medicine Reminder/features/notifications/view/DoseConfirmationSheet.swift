@@ -6,14 +6,16 @@
 //
 
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct DoseConfirmationSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var modelContext
 
-    @Query private var medications: [LocalMedication]
-    @Query private var medicationLogs: [LocalMedicationLog]
+    @FetchRequest(sortDescriptors: [])
+    private var medications: FetchedResults<LocalMedication>
+    @FetchRequest(sortDescriptors: [])
+    private var medicationLogs: FetchedResults<LocalMedicationLog>
 
     @State private var errorMessage: String?
     @State private var isConfirming = false
@@ -29,12 +31,12 @@ struct DoseConfirmationSheet: View {
         guard let medicationLog else { return nil }
 
         return medications.first {
-            $0.medicationId == medicationLog.medicationId && !$0.isDeleted
+            $0.medicationId == medicationLog.medicationId && !$0.deletedFlag
         }
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 AppTheme.appBackground
                     .ignoresSafeArea()
@@ -55,7 +57,7 @@ struct DoseConfirmationSheet: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Kapat") {
                         dismiss()
                     }
@@ -214,7 +216,8 @@ struct DoseConfirmationSheet: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(AppTheme.success)
-                .symbolEffect(.bounce, value: showSuccessState)
+                .scaleEffect(showSuccessState ? 1 : 0.82)
+                .animation(.spring(response: 0.38, dampingFraction: 0.7), value: showSuccessState)
 
             Text("Onaylandi")
                 .font(.subheadline.weight(.semibold))
@@ -270,7 +273,7 @@ struct DoseConfirmationSheet: View {
             }
 
             Task {
-                try? await Task.sleep(for: .milliseconds(900))
+                try? await Task.sleep(nanoseconds: 900_000_000)
                 await MainActor.run {
                     dismiss()
                 }

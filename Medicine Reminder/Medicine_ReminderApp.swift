@@ -6,36 +6,20 @@
 //
 
 import SwiftUI
-import SwiftData
 import FirebaseCore
 import UserNotifications
 
 @main
 struct Medicine_ReminderApp: App {
-    
-  @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-            LocalUser.self,
-            LocalMedication.self,
-            LocalMedicationLog.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private let persistenceController = PersistenceController.shared
 
     var body: some Scene {
         WindowGroup {
             LoginView()
                 .tint(AppTheme.primary)
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
-        .modelContainer(sharedModelContainer)
     }
 }
 

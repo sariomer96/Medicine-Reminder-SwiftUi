@@ -9,13 +9,13 @@ import SwiftUI
 
 @MainActor
 final class AppRouter: ObservableObject {
-    @Published var path = NavigationPath()
+    @Published var activeRoute: AppRoute?
 
     func push(_ route: AppRoute) {
-        path.append(route)
+        activeRoute = route
     }
 
     func popToRoot() {
-        path = NavigationPath()
+        activeRoute = nil
     }
 }

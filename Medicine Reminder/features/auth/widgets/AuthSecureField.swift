@@ -13,11 +13,21 @@ public struct AuthSecureField: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(AppTheme.textPrimary)
 
-            SecureField(placeholder, text: $text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+            ZStack(alignment: .leading) {
+                if text.isEmpty {
+                    Text(placeholder)
+                        .foregroundStyle(AppTheme.textSecondary.opacity(0.78))
+                        .padding(.horizontal, 16)
+                }
+
+                SecureField("", text: $text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .foregroundColor(AppTheme.textPrimary)
+                    .accentColor(AppTheme.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+            }
                 .background(AppTheme.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }

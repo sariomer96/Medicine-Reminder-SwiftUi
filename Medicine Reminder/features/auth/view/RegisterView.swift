@@ -104,7 +104,7 @@ struct RegisterView: View {
                 .padding(.top, 32)
             }
         }
-        .onChange(of: viewModel.isRegistered) { _, isRegistered in
+        .onChange(of: viewModel.isRegistered) { isRegistered in
             if isRegistered {
                 dismiss()
             }

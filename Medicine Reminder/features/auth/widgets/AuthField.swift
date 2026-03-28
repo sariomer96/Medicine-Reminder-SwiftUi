@@ -12,11 +12,21 @@ public struct AuthField: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(AppTheme.textPrimary)
 
-            TextField(placeholder, text: $text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+            ZStack(alignment: .leading) {
+                if text.isEmpty {
+                    Text(placeholder)
+                        .foregroundStyle(AppTheme.textSecondary.opacity(0.78))
+                        .padding(.horizontal, 16)
+                }
+
+                TextField("", text: $text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .foregroundColor(AppTheme.textPrimary)
+                    .accentColor(AppTheme.primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+            }
                 .background(AppTheme.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }

@@ -11,19 +11,36 @@ struct AppNavigatorView: View {
     @StateObject private var router = AppRouter()
     @StateObject private var notificationRouteStore = NotificationRouteStore.shared
     let sessionDisplayName: String
+    let onSessionEnded: () -> Void
 
     var body: some View {
-        NavigationStack(path: $router.path) {
-            HomeView(sessionDisplayName: sessionDisplayName)
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case .addMedication:
-                        AddMedicationView()
-                    case .allMedications:
-                        AllMedicationsView()
-                    }
+        NavigationView {
+            ZStack {
+                HomeView(
+                    sessionDisplayName: sessionDisplayName,
+                    onSessionEnded: onSessionEnded
+                )
+
+                NavigationLink(
+                    destination: AddMedicationView(),
+                    tag: .addMedication,
+                    selection: $router.activeRoute
+                ) {
+                    EmptyView()
                 }
+                .hidden()
+
+                NavigationLink(
+                    destination: AllMedicationsView(),
+                    tag: .allMedications,
+                    selection: $router.activeRoute
+                ) {
+                    EmptyView()
+                }
+                .hidden()
+            }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .environmentObject(router)
         .environmentObject(notificationRouteStore)
         .sheet(
@@ -44,5 +61,5 @@ struct AppNavigatorView: View {
 }
 
 #Preview {
-    AppNavigatorView(sessionDisplayName: "Guest")
+    AppNavigatorView(sessionDisplayName: "Guest", onSessionEnded: {})
 }

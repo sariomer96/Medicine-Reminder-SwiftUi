@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftData
+import CoreData
 import UserNotifications
 
 @MainActor
@@ -47,10 +47,18 @@ final class AddMedicationViewModel: ObservableObject {
         selectedMedicationName = medicationName
     }
 
+    func clearErrorMessage() {
+        errorMessage = nil
+    }
+
+    func clearInfoMessage() {
+        infoMessage = nil
+    }
+
     func saveMedication(
         selectedDays: Set<String>,
         dosageTimes: [Date],
-        modelContext: ModelContext
+        modelContext: NSManagedObjectContext
     ) async {
         let trimmedMedicationName = selectedMedicationName.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -86,6 +94,7 @@ final class AddMedicationViewModel: ObservableObject {
         let selectedWeekdays = weekdayValues(for: selectedDays).sorted()
         let reminderTimes = buildReminderTimes(from: dosageTimes)
         let localMedication = LocalMedication(
+            context: modelContext,
             medicationId: medicationId,
             userId: activeUser.userId,
             name: trimmedMedicationName,
@@ -96,7 +105,6 @@ final class AddMedicationViewModel: ObservableObject {
         var localSaveCompleted = false
 
         do {
-            modelContext.insert(localMedication)
             try modelContext.save()
             localSaveCompleted = true
 
@@ -135,8 +143,8 @@ final class AddMedicationViewModel: ObservableObject {
                 selectedWeekdays: selectedWeekdays,
                 reminderTimes: reminderTimes,
                 updatedAt: localMedication.updatedAt,
-                version: localMedication.version,
-                isDeleted: localMedication.isDeleted
+                version: Int(localMedication.version),
+                isDeleted: localMedication.deletedFlag
             )
             saveSucceeded = true
         } catch {
@@ -205,9 +213,9 @@ final class AddMedicationViewModel: ObservableObject {
         }
     }
 
-    private func fetchActiveUser(modelContext: ModelContext) -> LocalUser? {
+    private func fetchActiveUser(modelContext: NSManagedObjectContext) -> LocalUser? {
         do {
-            let users = try modelContext.fetch(FetchDescriptor<LocalUser>())
+            let users = try modelContext.fetch(LocalUser.fetchRequest())
             guard let activeUser = users.first(where: \.isActive) else {
                 errorMessage = "Aktif kullanici bulunamadi."
                 return nil
@@ -264,9 +272,9 @@ final class AddMedicationViewModel: ObservableObject {
 
     private func fetchMedicationLogs(
         for medicationId: String,
-        modelContext: ModelContext
+        modelContext: NSManagedObjectContext
     ) throws -> [LocalMedicationLog] {
-        let logs = try modelContext.fetch(FetchDescriptor<LocalMedicationLog>())
+        let logs = try modelContext.fetch(LocalMedicationLog.fetchRequest())
         return logs.filter { $0.medicationId == medicationId }
     }
 }

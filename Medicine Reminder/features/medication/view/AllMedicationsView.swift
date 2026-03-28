@@ -6,13 +6,15 @@
 //
 
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct AllMedicationsView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var modelContext
 
-    @Query(sort: \LocalMedication.updatedAt, order: .reverse) private var medications: [LocalMedication]
-    @Query private var users: [LocalUser]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \LocalMedication.updatedAt, ascending: false)])
+    private var medications: FetchedResults<LocalMedication>
+    @FetchRequest(sortDescriptors: [])
+    private var users: FetchedResults<LocalUser>
 
     @State private var errorMessage: String?
     @State private var isSyncing = false
@@ -44,7 +46,7 @@ struct AllMedicationsView: View {
 
         return medications.filter {
             $0.userId == activeUser.userId
-                && !$0.isDeleted
+                && !$0.deletedFlag
                 && !hiddenMedicationIds.contains($0.medicationId)
         }
     }
@@ -106,9 +108,7 @@ struct AllMedicationsView: View {
         }
         .sheet(item: $medicationBeingEdited) { medication in
             editMedicationSheet(for: medication)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(28)
+                .appSheetPresentation()
         }
     }
 
@@ -218,7 +218,7 @@ struct AllMedicationsView: View {
     }
 
     private func editMedicationSheet(for medication: LocalMedication) -> some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 AppTheme.appBackground
                     .ignoresSafeArea()
@@ -227,7 +227,7 @@ struct AllMedicationsView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(medication.name)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(AppTheme.textPrimary)
 
                             Text("Bildirim gunlerini ve saatlerini buradan guncelleyebilirsin.")
@@ -259,7 +259,7 @@ struct AllMedicationsView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Kapat") {
                         medicationBeingEdited = nil
                     }
@@ -444,8 +444,8 @@ struct AllMedicationsView: View {
                     selectedWeekdays: medication.selectedWeekdays,
                     reminderTimes: medication.reminderTimes,
                     updatedAt: medication.updatedAt,
-                    version: medication.version,
-                    isDeleted: medication.isDeleted
+                    version: Int(medication.version),
+                    isDeleted: medication.deletedFlag
                 )
             }
 
@@ -475,8 +475,9 @@ struct AllMedicationsView: View {
                 modelContext: modelContext
             )
             await NotificationManager.shared.removeNotifications(for: medicationId)
-
-            modelContext.delete(medication)
+            medication.deletedFlag = true
+            medication.updatedAt = deletionDate
+            medication.version = nextVersion
             try modelContext.save()
 
             if activeUser?.isGuest != true {
@@ -484,7 +485,7 @@ struct AllMedicationsView: View {
                     documentId: medicationId,
                     userId: userId,
                     updatedAt: deletionDate,
-                    version: nextVersion
+                    version: Int(nextVersion)
                 )
             }
 
@@ -493,7 +494,7 @@ struct AllMedicationsView: View {
             hiddenMedicationIds.remove(medication.medicationId)
             errorMessage = activeUser?.isGuest == true
                 ? "Ilac kaldirilamadi: \(error.localizedDescription)"
-                : "Ilac cihazdan kaldirildi ama buluta senkronize edilemedi: \(error.localizedDescription)"
+                : "Ilac cihazdan kaldirilamadi ya da buluta senkronize edilemedi: \(error.localizedDescription)"
         }
 
         isSyncing = false
@@ -543,13 +544,13 @@ struct AllMedicationsView: View {
     }
 
     private func fetchMedicationLogs(for medicationId: String) throws -> [LocalMedicationLog] {
-        let logs = try modelContext.fetch(FetchDescriptor<LocalMedicationLog>())
+        let logs = try modelContext.fetch(LocalMedicationLog.fetchRequest())
         return logs.filter { $0.medicationId == medicationId }
     }
 }
 
 #Preview {
-    NavigationStack {
+    NavigationView {
         AllMedicationsView()
     }
 }

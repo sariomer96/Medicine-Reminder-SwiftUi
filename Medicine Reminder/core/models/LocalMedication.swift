@@ -1,17 +1,17 @@
 import Foundation
-import SwiftData
+import CoreData
 
-@Model
-final class LocalMedication {
-    @Attribute(.unique) var medicationId: String
-    var userId: String
-    var name: String
-    var dosage: String
-    private var selectedWeekdaysData: Data
-    private var reminderTimesData: Data
-    var updatedAt: Date
-    var version: Int
-    var isDeleted: Bool
+@objc(LocalMedication)
+final class LocalMedication: NSManagedObject {
+    @NSManaged var medicationId: String
+    @NSManaged var userId: String
+    @NSManaged var name: String
+    @NSManaged var dosage: String
+    @NSManaged private var selectedWeekdaysData: Data
+    @NSManaged private var reminderTimesData: Data
+    @NSManaged var updatedAt: Date
+    @NSManaged var version: Int64
+    @NSManaged var deletedFlag: Bool
 
     var selectedWeekdays: [Int] {
         get {
@@ -31,7 +31,8 @@ final class LocalMedication {
         }
     }
 
-    init(
+    convenience init(
+        context: NSManagedObjectContext,
         medicationId: String,
         userId: String,
         name: String,
@@ -42,6 +43,7 @@ final class LocalMedication {
         version: Int = 1,
         isDeleted: Bool = false
     ) {
+        self.init(entity: Self.entity(), insertInto: context)
         self.medicationId = medicationId
         self.userId = userId
         self.name = name
@@ -49,7 +51,15 @@ final class LocalMedication {
         self.selectedWeekdaysData = (try? JSONEncoder().encode(selectedWeekdays)) ?? Data()
         self.reminderTimesData = (try? JSONEncoder().encode(reminderTimes)) ?? Data()
         self.updatedAt = updatedAt
-        self.version = version
-        self.isDeleted = isDeleted
+        self.version = Int64(version)
+        self.deletedFlag = isDeleted
     }
 }
+
+extension LocalMedication {
+    @nonobjc class func fetchRequest() -> NSFetchRequest<LocalMedication> {
+        NSFetchRequest<LocalMedication>(entityName: "LocalMedication")
+    }
+}
+
+extension LocalMedication: Identifiable {}

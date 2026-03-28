@@ -6,10 +6,10 @@
 //
 
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct LoginView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var modelContext
     @AppStorage("auth.rememberMe") private var storedRememberMe = false
     @AppStorage("auth.rememberedEmail") private var storedRememberedEmail = ""
     @StateObject private var viewModel = LoginViewModel()
@@ -19,7 +19,7 @@ struct LoginView: View {
     @State private var hasRestoredSession = false
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 AppTheme.appBackground
                     .ignoresSafeArea()
@@ -119,10 +119,16 @@ struct LoginView: View {
                     .padding(24)
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .hiddenNavigationBarCompat()
         }
         .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
-            AppNavigatorView(sessionDisplayName: viewModel.sessionDisplayName)
+            AppNavigatorView(
+                sessionDisplayName: viewModel.sessionDisplayName,
+                onSessionEnded: {
+                    viewModel.isLoggedIn = false
+                }
+            )
+            .environment(\.managedObjectContext, modelContext)
         }
         .onAppear {
             viewModel.restoreSessionIfNeeded(
@@ -135,14 +141,14 @@ struct LoginView: View {
                 email = storedRememberedEmail
             }
         }
-        .onChange(of: rememberMe) { _, newValue in
+        .onChange(of: rememberMe) { newValue in
             storedRememberMe = newValue
 
             if !newValue {
                 storedRememberedEmail = ""
             }
         }
-        .onChange(of: viewModel.isLoggedIn) { _, isLoggedIn in
+        .onChange(of: viewModel.isLoggedIn) { isLoggedIn in
             guard isLoggedIn else { return }
 
             if rememberMe {

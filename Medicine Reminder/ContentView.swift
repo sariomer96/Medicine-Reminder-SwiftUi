@@ -9,14 +9,18 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        TabView {
-            OnboardingView()
-                .tabItem {
-                    Label("Welcome", systemImage: "sparkles")
-                }
-
-         }
-        .toolbarBackground(AppTheme.surface, for: .tabBar)
+        if #available(iOS 16.0, *) {
+            TabView {
+                OnboardingView()
+                    .tabItem {
+                        Label("Welcome", systemImage: "sparkles")
+                    }
+                
+            }
+            .toolbarBackground(AppTheme.surface, for: .tabBar)
+        } else {
+            // Fallback on earlier versions
+        }
     }
 }
 

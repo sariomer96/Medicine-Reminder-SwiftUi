@@ -6,25 +6,29 @@
 //
 
 import SwiftUI
-import SwiftData
+import CoreData
 import UserNotifications
 import UIKit
 
 struct HomeView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var router: AppRouter
+    @EnvironmentObject private var notificationRouteStore: NotificationRouteStore
 
-    @Query(sort: \LocalMedication.updatedAt, order: .reverse) private var medications: [LocalMedication]
-    @Query(sort: \LocalMedicationLog.scheduledTime) private var medicationLogs: [LocalMedicationLog]
-    @Query private var users: [LocalUser]
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \LocalMedication.updatedAt, ascending: false)])
+    private var medications: FetchedResults<LocalMedication>
+    @FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \LocalMedicationLog.scheduledTime, ascending: true)])
+    private var medicationLogs: FetchedResults<LocalMedicationLog>
+    @FetchRequest(sortDescriptors: [])
+    private var users: FetchedResults<LocalUser>
 
     @StateObject private var viewModel = HomeViewModel()
     @State private var refreshDate = Date()
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var isRequestingNotificationPermission = false
     let sessionDisplayName: String
+    let onSessionEnded: () -> Void
 
     private var activeUser: LocalUser? {
         users.first(where: \.isActive)
@@ -34,7 +38,7 @@ struct HomeView: View {
         guard let activeUser else { return [] }
 
         return medications.filter {
-            $0.userId == activeUser.userId && !$0.isDeleted
+            $0.userId == activeUser.userId && !$0.deletedFlag
         }
     }
 
@@ -70,15 +74,52 @@ struct HomeView: View {
         }
 
         return NextDoseInfo(
+            logId: firstLog.logId,
             scheduledTime: firstLog.scheduledTime,
             items: items
         )
+    }
+
+    private func pendingDoseInfos(asOf now: Date) -> [PendingDoseInfo] {
+        guard let activeUser else { return [] }
+
+        let medicationMap = Dictionary(
+            uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
+        )
+        let fifteenMinutesAgo = Calendar.current.date(byAdding: .minute, value: -15, to: now) ?? now
+
+        return medicationLogs
+            .filter {
+                $0.userId == activeUser.userId
+                    && !$0.taken
+                    && $0.scheduledTime <= now
+                    && $0.scheduledTime >= fifteenMinutesAgo
+                    && medicationMap[$0.medicationId] != nil
+            }
+            .sorted { $0.scheduledTime < $1.scheduledTime }
+            .prefix(4)
+            .compactMap { log in
+                guard let medication = medicationMap[log.medicationId] else {
+                    return nil
+                }
+
+                let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
+                let subtitle = trimmedDosage.isEmpty ? medication.name : "\(medication.name) • \(trimmedDosage)"
+
+                return PendingDoseInfo(
+                    logId: log.logId,
+                    scheduledTime: log.scheduledTime,
+                    title: medication.name,
+                    subtitle: subtitle
+                )
+            }
     }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let effectiveDate = max(context.date, refreshDate)
             let currentNextDose = nextDoseInfo(asOf: effectiveDate)
+            let pendingDoses = pendingDoseInfos(asOf: effectiveDate)
 
             ZStack {
                 AppTheme.appBackground
@@ -91,7 +132,7 @@ struct HomeView: View {
 
                             Button {
                                 if viewModel.signOut(modelContext: modelContext) {
-                                    dismiss()
+                                    onSessionEnded()
                                 }
                             } label: {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -116,6 +157,7 @@ struct HomeView: View {
                         notificationStatusCard
 
                         nextDoseSection(nextDoseInfo: currentNextDose)
+                        pendingDosesSection(pendingDoses)
 
                         Button {
                             router.push(.allMedications)
@@ -157,12 +199,15 @@ struct HomeView: View {
                 notificationStatus = await NotificationManager.shared.authorizationStatus()
             }
         }
-        .onChange(of: scenePhase) { _, newPhase in
+        .onChange(of: scenePhase) { newPhase in
             guard newPhase == .active else { return }
 
             Task {
                 notificationStatus = await NotificationManager.shared.authorizationStatus()
             }
+        }
+        .onChange(of: notificationRouteStore.pendingDoseTarget?.id) { _ in
+            refreshDate = Date()
         }
     }
 
@@ -300,57 +345,133 @@ struct HomeView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Siradaki doz")
-                        .font(.headline)
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.9))
 
                     Text(formattedNextDoseTime(nextDoseInfo: nextDoseInfo))
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
 
                     Text(formattedNextDoseDay(nextDoseInfo: nextDoseInfo))
-                        .font(.subheadline.weight(.semibold))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.88))
                 }
 
                 Spacer()
 
                 Text("\(nextDoseItems(nextDoseInfo: nextDoseInfo).count) ilac")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 7)
                     .background(.white.opacity(0.18))
                     .clipShape(Capsule())
             }
  
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(nextDoseItems(nextDoseInfo: nextDoseInfo), id: \.self) { item in
                     HStack(spacing: 10) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(.white.opacity(0.16))
-                                .frame(width: 38, height: 38)
+                                .frame(width: 34, height: 34)
 
                             Image(systemName: "pills.fill")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
 
                         Text(item)
-                            .font(.title3.weight(.semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }
-            .padding(16)
+            .padding(14)
         }
-        .padding(24)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.heroGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .padding(.top, 24)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.top, 18)
+        .onTapGesture {
+            if let logId = nextDoseInfo?.logId {
+                notificationRouteStore.openDoseConfirmation(logId: logId)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func pendingDosesSection(_ doses: [PendingDoseInfo]) -> some View {
+        if !doses.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Bekleyen dozlar")
+                        .font(.headline)
+                        .foregroundStyle(AppTheme.textPrimary)
+
+                    Spacer()
+
+                    Text("\(doses.count)")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(AppTheme.primary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(AppTheme.surfaceMuted)
+                        .clipShape(Capsule())
+                }
+
+                VStack(spacing: 10) {
+                    ForEach(doses) { dose in
+                        Button {
+                            notificationRouteStore.openDoseConfirmation(logId: dose.logId)
+                        } label: {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(AppTheme.surfaceMuted)
+                                        .frame(width: 42, height: 42)
+
+                                    Image(systemName: "bell.badge.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(AppTheme.primary)
+                                }
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(dose.title)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(AppTheme.textPrimary)
+                                        .lineLimit(1)
+
+                                    Text(formattedPendingDoseTime(dose.scheduledTime))
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.textSecondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                            }
+                            .padding(14)
+                            .background(AppTheme.surfaceMuted)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(18)
+            .background(AppTheme.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(AppTheme.border, lineWidth: 1)
+            )
+        }
     }
 
     private func nextDoseItems(nextDoseInfo: NextDoseInfo?) -> [String] {
@@ -388,6 +509,15 @@ struct HomeView: View {
         return turkishWeekdays[weekday] ?? ""
     }
 
+    private func formattedPendingDoseTime(_ date: Date) -> String {
+        date.formatted(
+            Date.FormatStyle()
+                .weekday(.abbreviated)
+                .hour(.twoDigits(amPM: .omitted))
+                .minute(.twoDigits)
+        )
+    }
+
     private func handleNotificationButtonTap() {
         if notificationStatus == .denied {
             guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
@@ -407,10 +537,20 @@ struct HomeView: View {
 }
 
 private struct NextDoseInfo {
+    let logId: String
     let scheduledTime: Date
     let items: [String]
 }
 
+private struct PendingDoseInfo: Identifiable {
+    let logId: String
+    let scheduledTime: Date
+    let title: String
+    let subtitle: String
+
+    var id: String { logId }
+}
+
 #Preview {
-    HomeView(sessionDisplayName: "Guest")
+    HomeView(sessionDisplayName: "Guest", onSessionEnded: {})
 }

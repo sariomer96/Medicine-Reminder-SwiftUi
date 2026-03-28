@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftData
+import CoreData
 import FirebaseAuth
 
 @MainActor
@@ -23,7 +23,7 @@ final class LoginViewModel: ObservableObject {
         self.authRepository = authRepository
     }
 
-    func login(email: String, password: String, modelContext: ModelContext) async {
+    func login(email: String, password: String, modelContext: NSManagedObjectContext) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -58,18 +58,18 @@ final class LoginViewModel: ObservableObject {
         isLoading = false
     }
 
-    func loginAsGuest(modelContext: ModelContext) {
+    func loginAsGuest(modelContext: NSManagedObjectContext) {
         errorMessage = nil
         activateSession(userId: "guest", isGuest: true, displayName: "Guest", modelContext: modelContext)
     }
 
-    func restoreSessionIfNeeded(hasRestoredSession: inout Bool, modelContext: ModelContext) {
+    func restoreSessionIfNeeded(hasRestoredSession: inout Bool, modelContext: NSManagedObjectContext) {
         guard !hasRestoredSession else { return }
         hasRestoredSession = true
 
         Task {
             do {
-                let users = try modelContext.fetch(FetchDescriptor<LocalUser>())
+                let users = try modelContext.fetch(LocalUser.fetchRequest())
                 let firebaseUser = Auth.auth().currentUser
 
                 if let firebaseUser {
@@ -116,10 +116,10 @@ final class LoginViewModel: ObservableObject {
         userId: String,
         isGuest: Bool,
         displayName: String,
-        modelContext: ModelContext
+        modelContext: NSManagedObjectContext
     ) {
         do {
-            let users = try modelContext.fetch(FetchDescriptor<LocalUser>())
+            let users = try modelContext.fetch(LocalUser.fetchRequest())
 
             for user in users {
                 user.isActive = false
@@ -129,7 +129,7 @@ final class LoginViewModel: ObservableObject {
                 existingUser.isGuest = isGuest
                 existingUser.isActive = true
             } else {
-                modelContext.insert(LocalUser(userId: userId, isGuest: isGuest, isActive: true))
+                _ = LocalUser(context: modelContext, userId: userId, isGuest: isGuest, isActive: true)
             }
 
             try modelContext.save()

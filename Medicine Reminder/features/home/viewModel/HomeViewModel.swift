@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftData
+import CoreData
 
 @MainActor
 final class HomeViewModel: ObservableObject {
@@ -18,9 +18,9 @@ final class HomeViewModel: ObservableObject {
         self.authRepository = authRepository
     }
 
-    func signOut(modelContext: ModelContext) -> Bool {
+    func signOut(modelContext: NSManagedObjectContext) -> Bool {
         do {
-            let existingUsers = try modelContext.fetch(FetchDescriptor<LocalUser>())
+            let existingUsers = try modelContext.fetch(LocalUser.fetchRequest())
             let activeUsers = existingUsers.filter(\.isActive)
             let activeGuestSession = activeUsers.contains(where: \.isGuest)
 

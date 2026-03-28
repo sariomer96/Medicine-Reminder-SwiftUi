@@ -1,18 +1,19 @@
 import Foundation
-import SwiftData
+import CoreData
 
-@Model
-final class LocalMedicationLog {
-    @Attribute(.unique) var logId: String
-    var userId: String
-    var medicationId: String
-    var scheduledTime: Date
-    var taken: Bool
-    var takenAt: Date?
-    var updatedAt: Date
-    var syncStatus: String
+@objc(LocalMedicationLog)
+final class LocalMedicationLog: NSManagedObject {
+    @NSManaged var logId: String
+    @NSManaged var userId: String
+    @NSManaged var medicationId: String
+    @NSManaged var scheduledTime: Date
+    @NSManaged var taken: Bool
+    @NSManaged var takenAt: Date?
+    @NSManaged var updatedAt: Date
+    @NSManaged var syncStatus: String
 
-    init(
+    convenience init(
+        context: NSManagedObjectContext,
         logId: String,
         userId: String,
         medicationId: String,
@@ -22,6 +23,7 @@ final class LocalMedicationLog {
         updatedAt: Date = Date(),
         syncStatus: String = "pending"
     ) {
+        self.init(entity: Self.entity(), insertInto: context)
         self.logId = logId
         self.userId = userId
         self.medicationId = medicationId
@@ -32,3 +34,11 @@ final class LocalMedicationLog {
         self.syncStatus = syncStatus
     }
 }
+
+extension LocalMedicationLog {
+    @nonobjc class func fetchRequest() -> NSFetchRequest<LocalMedicationLog> {
+        NSFetchRequest<LocalMedicationLog>(entityName: "LocalMedicationLog")
+    }
+}
+
+extension LocalMedicationLog: Identifiable {}
