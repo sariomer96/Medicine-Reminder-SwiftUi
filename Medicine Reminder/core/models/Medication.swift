@@ -14,7 +14,8 @@ struct Medication: Codable, Identifiable {
     let userId: String
     let name: String
     let dosage: String
-    let schedule: [Date]
+    let selectedWeekdays: [Int]
+    let reminderTimes: [String]
     let updatedAt: Date
     let version: Int
     let isDeleted: Bool
@@ -24,7 +25,8 @@ struct Medication: Codable, Identifiable {
         userId: String,
         name: String,
         dosage: String,
-        schedule: [Date],
+        selectedWeekdays: [Int],
+        reminderTimes: [String],
         updatedAt: Date = Date(),
         version: Int = 1,
         isDeleted: Bool = false
@@ -33,7 +35,8 @@ struct Medication: Codable, Identifiable {
         self.userId = userId
         self.name = name
         self.dosage = dosage
-        self.schedule = schedule
+        self.selectedWeekdays = selectedWeekdays
+        self.reminderTimes = reminderTimes
         self.updatedAt = updatedAt
         self.version = version
         self.isDeleted = isDeleted

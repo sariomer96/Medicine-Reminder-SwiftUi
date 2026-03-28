@@ -122,7 +122,7 @@ struct LoginView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(isPresented: $viewModel.isLoggedIn) {
-            HomeView(sessionDisplayName: viewModel.sessionDisplayName)
+            AppNavigatorView(sessionDisplayName: viewModel.sessionDisplayName)
         }
         .onAppear {
             viewModel.restoreSessionIfNeeded(
