@@ -21,6 +21,8 @@ struct DoseConfirmationSheet: View {
     @State private var isConfirming = false
     @State private var showSuccessState = false
 
+    private let familyStore = FamilyStore()
+
     let logId: String
 
     private var medicationLog: LocalMedicationLog? {
@@ -65,6 +67,7 @@ struct DoseConfirmationSheet: View {
                 }
             }
         }
+        .dismissKeyboardOnTap()
     }
 
  
@@ -268,6 +271,11 @@ struct DoseConfirmationSheet: View {
 
         do {
             try modelContext.save()
+
+            Task {
+                try? await familyStore.resolveAlerts(for: logId)
+            }
+
             withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
                 showSuccessState = true
             }

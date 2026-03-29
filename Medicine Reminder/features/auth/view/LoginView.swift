@@ -157,6 +157,7 @@ struct LoginView: View {
                 storedRememberedEmail = ""
             }
         }
+        .dismissKeyboardOnTap()
     }
 }
 

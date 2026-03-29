@@ -19,7 +19,7 @@ struct AllMedicationsView: View {
     @State private var errorMessage: String?
     @State private var isSyncing = false
     @State private var hiddenMedicationIds = Set<String>()
-    @State private var medicationPendingDeletion: LocalMedication?
+    @State private var medicationPendingDeletionId: String?
     @State private var medicationBeingEdited: LocalMedication?
     @State private var draftSelectedWeekdays: Set<Int> = []
     @State private var draftReminderTimes: [Date] = []
@@ -55,6 +55,11 @@ struct AllMedicationsView: View {
         draftSelectedWeekdays.count == weekdayOrder.count
     }
 
+    private var medicationPendingDeletion: LocalMedication? {
+        guard let medicationPendingDeletionId else { return nil }
+        return medications.first(where: { $0.medicationId == medicationPendingDeletionId })
+    }
+
     var body: some View {
         ZStack {
             AppTheme.appBackground
@@ -84,27 +89,26 @@ struct AllMedicationsView: View {
         }
         .navigationTitle("Tum ilaclarim")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog(
+        .dismissKeyboardOnTap()
+        .alert(
             "Ilaci kaldir",
             isPresented: Binding(
-                get: { medicationPendingDeletion != nil },
-                set: { if !$0 { medicationPendingDeletion = nil } }
+                get: { medicationPendingDeletionId != nil },
+                set: { if !$0 { medicationPendingDeletionId = nil } }
             ),
-            titleVisibility: .visible
-        ) {
-            Button("Ilaci kaldir", role: .destructive) {
-                if let medicationPendingDeletion {
-                    Task {
-                        await removeMedication(medicationPendingDeletion)
-                    }
-                }
+            presenting: medicationPendingDeletion
+        ) { medication in
+            Button("Vazgec", role: .cancel) {
+                medicationPendingDeletionId = nil
             }
 
-            Button("Vazgec", role: .cancel) {
-                medicationPendingDeletion = nil
+            Button("Ilaci kaldir", role: .destructive) {
+                Task {
+                    await removeMedication(medicationId: medication.medicationId)
+                }
             }
-        } message: {
-            Text("Bu ilaci listenden kaldirirsan tekrarli doz plani da pasif hale gelir.")
+        } message: { medication in
+            Text("\(medication.name) kaldirmak istediginizden emin misiniz ?")
         }
         .sheet(item: $medicationBeingEdited) { medication in
             editMedicationSheet(for: medication)
@@ -195,7 +199,7 @@ struct AllMedicationsView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    medicationPendingDeletion = medication
+                    medicationPendingDeletionId = medication.medicationId
                 } label: {
                     Label("Kaldir", systemImage: "trash")
                         .font(.subheadline.weight(.semibold))
@@ -459,12 +463,17 @@ struct AllMedicationsView: View {
         isSyncing = false
     }
 
-    private func removeMedication(_ medication: LocalMedication) async {
+    private func removeMedication(medicationId: String) async {
+        guard let medication = medications.first(where: { $0.medicationId == medicationId }) else {
+            medicationPendingDeletionId = nil
+            errorMessage = "Silinecek ilac bulunamadi."
+            return
+        }
+
         isSyncing = true
         errorMessage = nil
-        hiddenMedicationIds.insert(medication.medicationId)
+        hiddenMedicationIds.insert(medicationId)
 
-        let medicationId = medication.medicationId
         let userId = medication.userId
         let nextVersion = medication.version + 1
         let deletionDate = Date()
@@ -489,9 +498,9 @@ struct AllMedicationsView: View {
                 )
             }
 
-            medicationPendingDeletion = nil
+            medicationPendingDeletionId = nil
         } catch {
-            hiddenMedicationIds.remove(medication.medicationId)
+            hiddenMedicationIds.remove(medicationId)
             errorMessage = activeUser?.isGuest == true
                 ? "Ilac kaldirilamadi: \(error.localizedDescription)"
                 : "Ilac cihazdan kaldirilamadi ya da buluta senkronize edilemedi: \(error.localizedDescription)"

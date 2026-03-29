@@ -10,4 +10,5 @@ import Foundation
 enum AppRoute: Hashable {
     case addMedication
     case allMedications
+    case familyHub
 }

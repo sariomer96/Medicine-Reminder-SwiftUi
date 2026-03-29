@@ -38,6 +38,15 @@ struct AppNavigatorView: View {
                     EmptyView()
                 }
                 .hidden()
+
+                NavigationLink(
+                    destination: FamilyView(),
+                    tag: .familyHub,
+                    selection: $router.activeRoute
+                ) {
+                    EmptyView()
+                }
+                .hidden()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())

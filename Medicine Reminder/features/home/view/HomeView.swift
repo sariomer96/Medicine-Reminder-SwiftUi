@@ -9,6 +9,7 @@ import SwiftUI
 import CoreData
 import UserNotifications
 import UIKit
+import Combine
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var modelContext
@@ -24,11 +25,13 @@ struct HomeView: View {
     private var users: FetchedResults<LocalUser>
 
     @StateObject private var viewModel = HomeViewModel()
+    @StateObject private var familyViewModel = FamilyViewModel()
     @State private var refreshDate = Date()
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var isRequestingNotificationPermission = false
     let sessionDisplayName: String
     let onSessionEnded: () -> Void
+    private let familySyncTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     private var activeUser: LocalUser? {
         users.first(where: \.isActive)
@@ -40,6 +43,10 @@ struct HomeView: View {
         return medications.filter {
             $0.userId == activeUser.userId && !$0.deletedFlag
         }
+    }
+
+    private var shouldShowFamilySection: Bool {
+        activeUser?.isGuest == false
     }
 
     private func nextDoseInfo(asOf now: Date) -> NextDoseInfo? {
@@ -158,6 +165,9 @@ struct HomeView: View {
 
                         nextDoseSection(nextDoseInfo: currentNextDose)
                         pendingDosesSection(pendingDoses)
+                        if shouldShowFamilySection {
+                            familySection
+                        }
 
                         Button {
                             router.push(.allMedications)
@@ -197,6 +207,7 @@ struct HomeView: View {
             refreshDate = Date()
             Task {
                 notificationStatus = await NotificationManager.shared.authorizationStatus()
+                await syncFamilyState()
             }
         }
         .onChange(of: scenePhase) { newPhase in
@@ -204,11 +215,134 @@ struct HomeView: View {
 
             Task {
                 notificationStatus = await NotificationManager.shared.authorizationStatus()
+                await syncFamilyState()
             }
         }
         .onChange(of: notificationRouteStore.pendingDoseTarget?.id) { _ in
             refreshDate = Date()
         }
+        .onReceive(familySyncTimer) { _ in
+            Task {
+                await syncFamilyState()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var familySection: some View {
+        let summary = familyViewModel.summary
+
+        Button {
+            router.push(.familyHub)
+        } label: {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Aile Takibi")
+                            .font(.headline)
+                            .foregroundStyle(AppTheme.textPrimary)
+
+                        Text(summary.isGuestSession ? "Hesapla aktif edilir" : "Kodla baglan ve gecikmeleri paylas")
+                            .font(.footnote)
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(AppTheme.textSecondary)
+                }
+
+                if summary.isGuestSession {
+                    Text("Misafir oturumunda aile eslesmesi kapali. Giris yaptiginda takip kodu uretebilirsin.")
+                        .font(.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(AppTheme.surfaceMuted)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                } else {
+                    HStack(spacing: 10) {
+                        summaryChip(title: "Takipciler", value: "\(summary.followerCount)")
+                        summaryChip(title: "Takip ettiklerin", value: "\(summary.followingCount)")
+                        summaryChip(title: "Aktif uyari", value: "\(summary.overdueAlertCount)")
+                    }
+
+                    Text(summary.shareCode.map { "Paylasilabilir kod: \($0)" } ?? "Takip kodun henuz hazir degil.")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(summary.shareCode == nil ? AppTheme.textSecondary : AppTheme.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(AppTheme.surfaceMuted)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+            }
+            .padding(20)
+            .background(AppTheme.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .stroke(AppTheme.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func summaryChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.textSecondary)
+
+            Text(value)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(AppTheme.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(AppTheme.surfaceMuted)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func overdueDosePayloads(asOf now: Date) -> [OverdueDosePayload] {
+        guard let activeUser else { return [] }
+
+        let medicationMap = Dictionary(
+            uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
+        )
+        let lookbackDate = Calendar.current.date(byAdding: .hour, value: -24, to: now) ?? now
+
+        return medicationLogs
+            .filter {
+                $0.userId == activeUser.userId
+                    && !$0.taken
+                    && $0.scheduledTime <= now
+                    && $0.scheduledTime >= lookbackDate
+                    && medicationMap[$0.medicationId] != nil
+            }
+            .map { log in
+                let medication = medicationMap[log.medicationId]
+                return OverdueDosePayload(
+                    logId: log.logId,
+                    medicationName: medication?.name ?? "Ilac",
+                    dosage: medication?.dosage ?? "",
+                    scheduledTime: log.scheduledTime
+                )
+            }
+    }
+
+    private func syncFamilyState() async {
+        guard shouldShowFamilySection else { return }
+
+        await familyViewModel.load(activeUser: activeUser)
+
+        let overduePayloads = overdueDosePayloads(asOf: Date())
+        guard !overduePayloads.isEmpty else { return }
+
+        await familyViewModel.syncOverdueAlerts(activeUser: activeUser, doses: overduePayloads)
+        await familyViewModel.load(activeUser: activeUser)
     }
 
     @ViewBuilder

@@ -64,6 +64,7 @@ struct AddMedicationView: View {
         }
         .navigationTitle("Yeni ilac ekle")
         .navigationBarTitleDisplayMode(.inline)
+        .dismissKeyboardOnTap()
         .sheet(isPresented: $showsSearchSheet) {
             medicationSearchSheet
                 .appSheetPresentation()

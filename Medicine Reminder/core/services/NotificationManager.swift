@@ -76,6 +76,41 @@ final class NotificationManager {
         }
     }
 
+    func scheduleFamilyAlertNotifications(for alerts: [CareAlert]) async throws -> Bool {
+        let status = try await requestAuthorizationIfNeeded()
+        guard status == .authorized || status == .provisional || status == .ephemeral else {
+            return false
+        }
+
+        for alert in alerts {
+            let identifier = familyAlertNotificationIdentifier(for: alert.id ?? "\(alert.caregiverId)_\(alert.logId)")
+
+            let content = UNMutableNotificationContent()
+            content.title = "\(alert.patientName) icin geciken ilac"
+
+            let trimmedDosage = alert.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmedDosage.isEmpty {
+                content.body = "\(alert.medicationName) dozu gecikti. Kontrol etmek isteyebilirsin."
+            } else {
+                content.body = "\(alert.medicationName) • \(trimmedDosage) dozu gecikti."
+            }
+
+            content.sound = .default
+            content.interruptionLevel = .timeSensitive
+            content.userInfo = [
+                "careAlertId": alert.id ?? "",
+                "patientId": alert.patientId,
+                "logId": alert.logId
+            ]
+
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+            try await center.add(request)
+        }
+
+        return true
+    }
+
     func removeNotifications(for medicationId: String) async {
         let identifiers = await pendingNotificationIdentifiers(for: medicationId)
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
@@ -97,5 +132,9 @@ final class NotificationManager {
 
     private func notificationIdentifier(medicationId: String, logId: String) -> String {
         "\(notificationPrefix(for: medicationId))\(logId)"
+    }
+
+    private func familyAlertNotificationIdentifier(for alertId: String) -> String {
+        "family.alert.\(alertId)"
     }
 }
