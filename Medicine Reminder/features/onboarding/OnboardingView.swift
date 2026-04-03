@@ -7,61 +7,165 @@
 
 import SwiftUI
 
+enum OnboardingPage: Int, CaseIterable {
+    case pillTracking
+    case familyPillTracking
+
+    var imageName: String {
+        switch self {
+        case .pillTracking:
+            return "medicine1"
+        case .familyPillTracking:
+            return "family"
+        }
+    }
+
+    var lottieFileName: String {
+        switch self {
+        case .pillTracking:
+            return "MedicPills"
+        case .familyPillTracking:
+            return "MedicShield"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .pillTracking:
+            return "Ilaclarini takip et"
+        case .familyPillTracking:
+            return "Aile takibini kolaylastir"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .pillTracking:
+            return "Ilac saatlerini duzenli takip et ve gunluk rutinini aksatma."
+        case .familyPillTracking:
+            return "Sevdiklerinin ilac duzenini tek yerden kontrol et ve haberdar ol."
+        }
+    }
+
+    var buttonTitle: String {
+        isLastPage ? "Basla" : "Devam et"
+    }
+
+    var isLastPage: Bool {
+        self == OnboardingPage.allCases.last
+    }
+}
+
 struct OnboardingView: View {
+    @State private var currentPage = 0
+    private let showsStaticImages = false
+    let onFinish: () -> Void
+
     var body: some View {
         ZStack {
             AppTheme.appBackground
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Medicine Reminder")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundStyle(AppTheme.textPrimary)
-
-                    Text("Ilac takibini sade, guven veren ve anlasilir bir deneyimle yonetin.")
-                        .font(.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary)
+            VStack(spacing: 24) {
+                TabView(selection: $currentPage) {
+                    ForEach(OnboardingPage.allCases, id: \.rawValue) { page in
+                        getPageView(for: page)
+                            .tag(page.rawValue)
+                    }
                 }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("merhaba")
-                        .font(.headline)
-                        .foregroundStyle(AppTheme.textPrimary)
+                VStack(spacing: 20) {
+                    HStack(spacing: 12) {
+                        ForEach(Array(OnboardingPage.allCases.indices), id: \.self) { index in
+                            Circle()
+                                .fill(currentPage == index ? AppTheme.primary : AppTheme.primarySoft)
+                                .opacity(currentPage == index ? 1 : 0.55)
+                                .frame(width: currentPage == index ? 12 : 8, height: currentPage == index ? 12 : 8)
+                        }
+                    }
 
-                    Text("Hatirlaticilariniz tek bakista gorunur, kritik bilgiler net sekilde ayrisir.")
-                        .font(.subheadline)
-                        .foregroundStyle(AppTheme.textSecondary)
+                    Button(action: handleContinueTapped) {
+                        Text(currentPageModel.buttonTitle)
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(AppTheme.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppTheme.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(AppTheme.border, lineWidth: 1)
-                )
-                .shadow(color: AppTheme.primary.opacity(0.12), radius: 18, x: 0, y: 10)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Sakin ve temiz yesil-mavi tonlar", systemImage: "cross.case.fill")
-                    Label("Uyari ve odak icin sicak vurgu rengi", systemImage: "bell.badge.fill")
-                    Label("Okunurlugu yuksek kart ve yazi kontrasti", systemImage: "heart.text.square.fill")
-                }
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(AppTheme.primary)
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppTheme.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-
-                Spacer(minLength: 0)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
             }
-            .padding(24)
         }
+    }
+
+    private var currentPageModel: OnboardingPage {
+        OnboardingPage(rawValue: currentPage) ?? .pillTracking
+    }
+
+    private func handleContinueTapped() {
+        let nextPage = currentPage + 1
+
+        if nextPage < OnboardingPage.allCases.count {
+            withAnimation(.easeInOut) {
+                currentPage = nextPage
+            }
+        } else {
+            onFinish()
+        }
+    }
+
+    @ViewBuilder
+    private func mediaView(for page: OnboardingPage) -> some View {
+        ZStack {
+            OnboardingLottieView(animationName: page.lottieFileName)
+                .frame(maxWidth: 280, maxHeight: 260)
+                .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
+                .padding(.horizontal, 24)
+
+            if showsStaticImages {
+                Image(page.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 280, maxHeight: 260)
+                    .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
+                    .padding(.horizontal, 24)
+            }
+        }
+        .frame(height: 340)
+    }
+
+    @ViewBuilder
+    private func getPageView(for page: OnboardingPage) -> some View {
+        VStack(spacing: 30) {
+            Spacer(minLength: 20)
+
+            mediaView(for: page)
+
+            VStack(spacing: 20) {
+                Text(page.title)
+                    .font(.system(.largeTitle, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundColor(AppTheme.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Text(page.description)
+                    .font(.system(.title3, design: .rounded))
+                    .fontWeight(.medium)
+                    .foregroundColor(AppTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 24)
     }
 }
 
 #Preview {
-    OnboardingView()
+    OnboardingView(onFinish: {})
 }

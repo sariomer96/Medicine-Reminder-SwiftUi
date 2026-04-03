@@ -16,9 +16,42 @@ struct Medicine_ReminderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LoginView()
-                .tint(AppTheme.primary)
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            AppRootView()
+            .tint(AppTheme.primary)
+            .environment(\.managedObjectContext, persistenceController.container.viewContext)
+        }
+    }
+}
+
+private struct AppRootView: View {
+    @AppStorage("app.hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("app.hasRequestedNotificationPermission") private var hasRequestedNotificationPermission = false
+
+    var body: some View {
+        ZStack {
+            if hasSeenOnboarding {
+                LoginView()
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+            } else {
+                OnboardingView {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        hasSeenOnboarding = true
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .opacity,
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: hasSeenOnboarding)
+        .task {
+            guard !hasRequestedNotificationPermission else { return }
+            hasRequestedNotificationPermission = true
+            _ = try? await NotificationManager.shared.requestAuthorizationIfNeeded()
         }
     }
 }
