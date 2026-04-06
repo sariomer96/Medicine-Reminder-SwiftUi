@@ -285,13 +285,14 @@ struct HomeView: View {
         let medicationMap = Dictionary(
             uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
         )
+        let familyAlertThreshold = Calendar.current.date(byAdding: .minute, value: -10, to: now) ?? now
         let lookbackDate = Calendar.current.date(byAdding: .hour, value: -24, to: now) ?? now
 
         return medicationLogs
             .filter {
                 $0.userId == activeUser.userId
                     && !$0.taken
-                    && $0.scheduledTime <= now
+                    && $0.scheduledTime <= familyAlertThreshold
                     && $0.scheduledTime >= lookbackDate
                     && medicationMap[$0.medicationId] != nil
             }

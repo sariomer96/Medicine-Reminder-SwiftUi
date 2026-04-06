@@ -4,6 +4,7 @@ import { FirebaseMessagingError, getMessaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 initializeApp();
 
@@ -61,6 +62,10 @@ type DebugPushRequest = {
   title?: string;
   body?: string;
   createdAt?: Timestamp;
+};
+
+type DeleteCareAlertsRequest = {
+  alertIds?: unknown;
 };
 
 export const sendDebugPushRequest = onDocumentCreated(
@@ -256,7 +261,7 @@ export const processOverdueMedicationLogs = onSchedule(
   },
   async () => {
     const now = new Date();
-    const gracePeriodMs = 2 * 60 * 1000;
+    const gracePeriodMs = 10 * 60 * 1000;
     const overdueThreshold = Timestamp.fromDate(new Date(now.getTime() - gracePeriodMs));
 
     const snapshot = await db.collection("medicationLogs")
@@ -440,6 +445,67 @@ export const resolveCareAlertsOnDoseTaken = onDocumentUpdated(
       logId,
       alertsResolved: snapshot.size
     });
+  }
+);
+
+export const deleteCareAlerts = onCall(
+  {
+    region: "europe-west1"
+  },
+  async (request) => {
+    const caregiverId = request.auth?.uid;
+    if (!caregiverId) {
+      throw new HttpsError("unauthenticated", "Kullanici dogrulamasi gerekli.");
+    }
+
+    const data = (request.data ?? {}) as DeleteCareAlertsRequest;
+    const rawAlertIds = data.alertIds;
+
+    if (!Array.isArray(rawAlertIds)) {
+      throw new HttpsError("invalid-argument", "Silinecek uyari listesi gecersiz.");
+    }
+
+    const alertIds = rawAlertIds
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
+
+    if (alertIds.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const uniqueAlertIds = Array.from(new Set(alertIds));
+    const batch = db.batch();
+    let deletedCount = 0;
+
+    for (const alertId of uniqueAlertIds) {
+      const reference = db.collection("careAlerts").doc(alertId);
+      const snapshot = await reference.get();
+
+      if (!snapshot.exists) {
+        continue;
+      }
+
+      const alert = snapshot.data() as Partial<CareAlert> | undefined;
+      if (alert?.caregiverId !== caregiverId) {
+        throw new HttpsError("permission-denied", "Bu uyariyi silme yetkin yok.");
+      }
+
+      batch.delete(reference);
+      deletedCount += 1;
+    }
+
+    if (deletedCount > 0) {
+      await batch.commit();
+    }
+
+    logger.info("Deleted care alerts via callable", {
+      caregiverId,
+      deletedCount,
+      alertIds: uniqueAlertIds
+    });
+
+    return { deletedCount };
   }
 );
 

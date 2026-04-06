@@ -263,8 +263,7 @@ struct FamilyView: View {
                             .foregroundStyle(AppTheme.danger)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 9)
-                            .background(AppTheme.danger.opacity(0.12))
-                            .clipShape(Capsule())
+                          
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isDeletingAlerts)

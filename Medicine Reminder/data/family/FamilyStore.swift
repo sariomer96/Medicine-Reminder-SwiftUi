@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseFirestore
+import FirebaseFunctions
 
 
 
@@ -58,6 +59,7 @@ struct OverdueDosePayload: Identifiable {
 
 final class FamilyStore {
     private let db = Firestore.firestore()
+    private let functions = Functions.functions(region: "europe-west1")
     private let userStore: UserStore
 
     private let inviteCollection = "familyInviteCodes"
@@ -302,22 +304,11 @@ final class FamilyStore {
     }
 
     func removeAlert(alertId: String) async throws {
-        try await db.collection(alertCollection)
-            .document(alertId)
-            .delete()
+        try await deleteCareAlerts(alertIds: [alertId])
     }
 
     func removeAlerts(alertIds: [String]) async throws {
-        guard !alertIds.isEmpty else { return }
-
-        let batch = db.batch()
-
-        for alertId in alertIds {
-            let reference = db.collection(alertCollection).document(alertId)
-            batch.deleteDocument(reference)
-        }
-
-        try await batch.commit()
+        try await deleteCareAlerts(alertIds: alertIds)
     }
 
     private func fetchAcceptedCaregivers(for patientId: String) async throws -> [UserProfile] {
@@ -357,6 +348,22 @@ final class FamilyStore {
 
     private func alertDocumentId(caregiverId: String, logId: String) -> String {
         "\(caregiverId)_\(logId)"
+    }
+
+    private func deleteCareAlerts(alertIds: [String]) async throws {
+        let normalizedAlertIds = Array(
+            Set(
+                alertIds
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+        )
+
+        guard !normalizedAlertIds.isEmpty else { return }
+
+        _ = try await functions
+            .httpsCallable("deleteCareAlerts")
+            .call(["alertIds": normalizedAlertIds])
     }
 
     private static func makeInviteCode() -> String {
