@@ -8,8 +8,8 @@
 import SwiftUI
 
 enum AppTheme {
-    static let backgroundTop = Color(hex: "#F0FAF7")
-    static let backgroundBottom = Color(hex: "#DEF2ED")
+    static let backgroundTop = Color(hex: "#F6FBFA")
+    static let backgroundBottom = Color(hex: "#EAF4F1")
 
     static let primary = Color(hex: "#147A75")
     static let primarySoft = Color(hex: "#9ED6CC")
