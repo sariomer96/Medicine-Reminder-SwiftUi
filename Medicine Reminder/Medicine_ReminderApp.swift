@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+import CoreData
 import FirebaseCore
+import FirebaseAuth
 import UserNotifications
 
 @main
@@ -24,17 +26,40 @@ struct Medicine_ReminderApp: App {
 }
 
 private struct AppRootView: View {
+    @Environment(\.managedObjectContext) private var modelContext
     @AppStorage("app.hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("app.hasRequestedNotificationPermission") private var hasRequestedNotificationPermission = false
+    @State private var isCheckingSession = true
+    @State private var hasActiveSession = false
+    @State private var sessionDisplayName = ""
+
+    private let authRepository = AuthRepository()
 
     var body: some View {
         ZStack {
             if hasSeenOnboarding {
-                LoginView()
+                if isCheckingSession {
+                    launchLoadingView
+                        .transition(.opacity)
+                } else if hasActiveSession {
+                    AppNavigatorView(
+                        sessionDisplayName: sessionDisplayName,
+                        onSessionEnded: {
+                            hasActiveSession = false
+                            sessionDisplayName = ""
+                        }
+                    )
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .opacity
                     ))
+                } else {
+                    LoginView()
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                }
             } else {
                 OnboardingView {
                     withAnimation(.easeInOut(duration: 0.4)) {
@@ -48,11 +73,112 @@ private struct AppRootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.4), value: hasSeenOnboarding)
+        .animation(.easeInOut(duration: 0.25), value: isCheckingSession)
+        .animation(.easeInOut(duration: 0.25), value: hasActiveSession)
         .task {
             guard !hasRequestedNotificationPermission else { return }
             hasRequestedNotificationPermission = true
             _ = try? await NotificationManager.shared.requestAuthorizationIfNeeded()
         }
+        .task(id: hasSeenOnboarding) {
+            guard hasSeenOnboarding else { return }
+            await restoreInitialSession()
+        }
+    }
+
+    private var launchLoadingView: some View {
+        ZStack {
+            AppTheme.appBackground
+                .ignoresSafeArea()
+
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(AppTheme.primary)
+                .scaleEffect(1.2)
+        }
+    }
+
+    private func restoreInitialSession() async {
+        guard isCheckingSession else { return }
+
+        defer {
+            isCheckingSession = false
+        }
+
+        do {
+            let users = try modelContext.fetch(LocalUser.fetchRequest())
+
+            if let firebaseUser = Auth.auth().currentUser {
+                let displayName = await fetchSessionDisplayName(
+                    userId: firebaseUser.uid,
+                    fallbackEmail: firebaseUser.email
+                )
+
+                try activateSession(
+                    userId: firebaseUser.uid,
+                    isGuest: false,
+                    displayName: displayName
+                )
+
+                await DeviceTokenStore.shared.syncCurrentDeviceTokenIfPossible()
+                return
+            }
+
+            if let activeGuest = users.first(where: { $0.isGuest && $0.isActive }) {
+                hasActiveSession = true
+                sessionDisplayName = activeGuest.userId == "guest" ? "Guest" : "Misafir"
+                return
+            }
+
+            let staleUsers = users.filter { !$0.isGuest && $0.isActive }
+            if !staleUsers.isEmpty {
+                for user in staleUsers {
+                    user.isActive = false
+                }
+                try modelContext.save()
+            }
+        } catch {
+            hasActiveSession = false
+            sessionDisplayName = ""
+        }
+    }
+
+    private func activateSession(
+        userId: String,
+        isGuest: Bool,
+        displayName: String
+    ) throws {
+        let users = try modelContext.fetch(LocalUser.fetchRequest())
+
+        for user in users {
+            user.isActive = false
+        }
+
+        if let existingUser = users.first(where: { $0.userId == userId }) {
+            existingUser.isGuest = isGuest
+            existingUser.isActive = true
+        } else {
+            _ = LocalUser(context: modelContext, userId: userId, isGuest: isGuest, isActive: true)
+        }
+
+        try modelContext.save()
+        hasActiveSession = true
+        sessionDisplayName = displayName
+    }
+
+    private func fetchSessionDisplayName(userId: String, fallbackEmail: String?) async -> String {
+        let profile = await authRepository.fetchUserProfile(userId: userId)
+        let trimmedName = profile?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if !trimmedName.isEmpty {
+            return trimmedName
+        }
+
+        if let fallbackEmail, !fallbackEmail.isEmpty {
+            return fallbackEmail
+        }
+
+        return "Kullanici"
     }
 }
 
