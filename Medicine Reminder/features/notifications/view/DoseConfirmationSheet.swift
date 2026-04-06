@@ -61,7 +61,7 @@ struct DoseConfirmationSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Kapat") {
+                    Button(L10n.string("common.close")) {
                         dismiss()
                     }
                     .foregroundStyle(AppTheme.textSecondary)
@@ -108,13 +108,13 @@ struct DoseConfirmationSheet: View {
 
                 HStack(spacing: 10) {
                     infoChip(
-                        title: "Durum",
-                        value: medicationLog.taken ? "Onaylandi" : "Bekliyor"
+                        title: L10n.string("common.status"),
+                        value: medicationLog.taken ? L10n.string("dose.confirmed") : L10n.string("dose.pending")
                     )
 
                     let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmedDosage.isEmpty {
-                        infoChip(title: "Doz", value: trimmedDosage)
+                        infoChip(title: L10n.string("common.dosage"), value: trimmedDosage)
                     }
                 }
 
@@ -126,7 +126,7 @@ struct DoseConfirmationSheet: View {
                         Image(systemName: "checkmark.seal.fill")
                             .foregroundStyle(AppTheme.success)
 
-                        Text("Onaylandı.")
+                        Text(L10n.string("dose.confirmed_with_period"))
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(AppTheme.success)
                     }
@@ -145,7 +145,7 @@ struct DoseConfirmationSheet: View {
                                 HStack {
                                     Spacer()
 
-                                    Text(isConfirming ? "Kaydediliyor..." : "Bu dozu aldim")
+                                    Text(isConfirming ? L10n.string("common.loading_saving") : L10n.string("dose.confirm_action"))
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(.white)
 
@@ -181,11 +181,11 @@ struct DoseConfirmationSheet: View {
             .shadow(color: AppTheme.primary.opacity(0.08), radius: 18, x: 0, y: 10)
         } else {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Doz bulunamadi")
+                Text(L10n.string("dose.not_found_title"))
                     .font(.headline)
                     .foregroundStyle(AppTheme.textPrimary)
 
-                Text("Bu bildirimle bagli doz kaydi artik bulunamiyor veya daha once temizlenmis olabilir.")
+                Text(L10n.string("dose.not_found_description"))
                     .font(.footnote)
                     .foregroundStyle(AppTheme.textSecondary)
             }
@@ -223,7 +223,7 @@ struct DoseConfirmationSheet: View {
                 .scaleEffect(showSuccessState ? 1 : 0.82)
                 .animation(.spring(response: 0.38, dampingFraction: 0.7), value: showSuccessState)
 
-            Text("Onaylandi")
+            Text(L10n.string("dose.confirmed"))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(AppTheme.textPrimary)
         }
@@ -289,7 +289,7 @@ struct DoseConfirmationSheet: View {
                 }
             }
         } catch {
-            errorMessage = "Doz onayi kaydedilemedi: \(error.localizedDescription)"
+            errorMessage = L10n.format("dose.confirm_save_failed", error.localizedDescription)
         }
 
         isConfirming = false

@@ -72,7 +72,7 @@ final class UserStore {
     private func inferredDisplayName(from email: String) -> String {
         let localPart = email.split(separator: "@").first.map(String.init) ?? ""
         let trimmedLocalPart = localPart.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedLocalPart.isEmpty ? "Kullanici" : trimmedLocalPart
+        return trimmedLocalPart.isEmpty ? L10n.string("common.user") : trimmedLocalPart
     }
 }
 

@@ -50,12 +50,12 @@ final class NotificationManager {
 
         for log in upcomingLogs {
             let content = UNMutableNotificationContent()
-            content.title = "\(medication.name) zamani"
+            content.title = L10n.format("notification.medication_title", medication.name)
 
             let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
             content.body = trimmedDosage.isEmpty
-                ? "Ilacini almayi unutma."
-                : "\(trimmedDosage) dozunu almayi unutma."
+                ? L10n.string("notification.medication_body_default")
+                : L10n.format("notification.medication_body_dosage", trimmedDosage)
             content.sound = .default
             content.interruptionLevel = .timeSensitive
             content.userInfo = [
@@ -86,13 +86,13 @@ final class NotificationManager {
             let identifier = familyAlertNotificationIdentifier(for: alert.id ?? "\(alert.caregiverId)_\(alert.logId)")
 
             let content = UNMutableNotificationContent()
-            content.title = "\(alert.patientName) icin geciken ilac"
+            content.title = L10n.format("notification.family_alert_title", alert.patientName)
 
             let trimmedDosage = alert.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmedDosage.isEmpty {
-                content.body = "\(alert.medicationName) dozu gecikti. Kontrol etmek isteyebilirsin."
+                content.body = L10n.format("notification.family_alert_body_default", alert.medicationName)
             } else {
-                content.body = "\(alert.medicationName) • \(trimmedDosage) dozu gecikti."
+                content.body = L10n.format("notification.family_alert_body_dosage", alert.medicationName, trimmedDosage)
             }
 
             content.sound = .default

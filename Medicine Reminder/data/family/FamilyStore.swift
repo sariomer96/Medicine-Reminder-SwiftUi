@@ -20,13 +20,13 @@ enum FamilyStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .profileNotFound:
-            return "Kullanici profili bulunamadi."
+            return L10n.string("family.error_profile_not_found")
         case .inviteCodeNotFound:
-            return "Girdiginiz davet kodu aktif degil ya da bulunamadi."
+            return L10n.string("family.error_invite_code_not_found")
         case .cannotLinkToSelf:
-            return "Kendi kodunuz ile eslesemezsiniz."
+            return L10n.string("family.error_cannot_link_to_self")
         case .invalidUser:
-            return "Gecerli bir kullanici bulunamadi."
+            return L10n.string("family.error_invalid_user")
         }
     }
 }

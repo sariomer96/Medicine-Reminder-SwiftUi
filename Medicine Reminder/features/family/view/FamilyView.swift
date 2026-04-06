@@ -58,7 +58,7 @@ struct FamilyView: View {
                 .padding(.bottom, 24)
             }
         }
-        .navigationTitle("Aile Takibi")
+        .navigationTitle(L10n.string("family.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
         .dismissKeyboardOnTap()
         .task {
@@ -70,11 +70,11 @@ struct FamilyView: View {
 
     private var guestStateCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Aile ozelligi icin hesap gerekli")
+            Text(L10n.string("family.account_required_title"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
-            Text("Takip kodu olusturmak ve baska cihazlarla eslesmek icin giris yapmis bir hesap kullanman gerekiyor.")
+            Text(L10n.string("family.account_required_description"))
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.textSecondary)
         }
@@ -89,11 +89,11 @@ struct FamilyView: View {
 
     private var shareCodeCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Takip kodun")
+            Text(L10n.string("family.share_code_title"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
-            Text(viewModel.shareCode ?? "Henuz kod uretilmedi")
+            Text(viewModel.shareCode ?? L10n.string("family.code_not_generated"))
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .tracking(2)
                 .foregroundStyle(viewModel.shareCode == nil ? AppTheme.textSecondary : AppTheme.primary)
@@ -102,7 +102,7 @@ struct FamilyView: View {
                 .background(AppTheme.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
 
-            Text("Bu kodu kopyalayip ilac takibini alacak aile bireyine gonder.")
+            Text(L10n.string("family.share_code_description"))
                 .font(.footnote)
                 .foregroundStyle(AppTheme.textSecondary)
 
@@ -112,7 +112,7 @@ struct FamilyView: View {
                         await viewModel.generateInviteCode()
                     }
                 } label: {
-                    Text(viewModel.shareCode == nil ? "Kod olustur" : "Kodu yenile")
+                    Text(viewModel.shareCode == nil ? L10n.string("family.generate_code") : L10n.string("family.refresh_code"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -125,7 +125,7 @@ struct FamilyView: View {
                 Button {
                     viewModel.copyInviteCode()
                 } label: {
-                    Text("Kopyala")
+                    Text(L10n.string("common.copy"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.primary)
                         .frame(maxWidth: .infinity)
@@ -147,15 +147,15 @@ struct FamilyView: View {
 
     private var redeemCodeCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Kodla esles")
+            Text(L10n.string("family.match_with_code"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
-            Text("Yakininin paylastigi kodu gir. Eslesmeden sonra geciken ilac uyarilari sana da dusecek.")
+            Text(L10n.string("family.match_description"))
                 .font(.footnote)
                 .foregroundStyle(AppTheme.textSecondary)
 
-            TextField("Ornek: A7K2-P9QD", text: $viewModel.inviteCodeInput)
+            TextField(L10n.string("family.code_placeholder"), text: $viewModel.inviteCodeInput)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
                 .foregroundStyle(AppTheme.textPrimary)
@@ -170,7 +170,7 @@ struct FamilyView: View {
                     await viewModel.redeemInviteCode(activeUser: activeUser)
                 }
             } label: {
-                Text(viewModel.isRedeemingCode ? "Eslestiriliyor..." : "Kodu Onayla")
+                Text(viewModel.isRedeemingCode ? L10n.string("family.matching") : L10n.string("family.code_confirm"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -191,12 +191,12 @@ struct FamilyView: View {
 
     private var connectionsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Bagli kisiler")
+            Text(L10n.string("family.connected_people"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
             if viewModel.followers.isEmpty && viewModel.following.isEmpty {
-                Text("Henuz aile eslesmesi yok. Kodu paylasarak ilk baglantini kurabilirsin.")
+                Text(L10n.string("family.no_connections"))
                     .font(.footnote)
                     .foregroundStyle(AppTheme.textSecondary)
                     .padding(18)
@@ -210,7 +210,7 @@ struct FamilyView: View {
             } else {
                 if !viewModel.followers.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Beni takip edenler")
+                        Text(L10n.string("family.my_followers"))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(AppTheme.textSecondary)
 
@@ -218,7 +218,7 @@ struct FamilyView: View {
                             connectionCard(
                                 title: connection.counterpart.name,
                                 subtitle: connection.counterpart.email,
-                                badge: "Takipci"
+                                badge: L10n.string("family.badge_follower")
                             )
                         }
                     }
@@ -226,7 +226,7 @@ struct FamilyView: View {
 
                 if !viewModel.following.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Takip ettiklerim")
+                        Text(L10n.string("family.my_following"))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(AppTheme.textSecondary)
 
@@ -234,7 +234,7 @@ struct FamilyView: View {
                             connectionCard(
                                 title: connection.counterpart.name,
                                 subtitle: connection.counterpart.email,
-                                badge: "Bildirim aliyorum"
+                                badge: L10n.string("family.badge_receiving_notifications")
                             )
                         }
                     }
@@ -246,7 +246,7 @@ struct FamilyView: View {
     private var alertsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
-                Text("Geciken ilac uyarilari")
+                Text(L10n.string("family.overdue_alerts"))
                     .font(.headline)
                     .foregroundStyle(AppTheme.textPrimary)
 
@@ -258,7 +258,7 @@ struct FamilyView: View {
                             await viewModel.clearAllAlerts()
                         }
                     } label: {
-                        Text(viewModel.isDeletingAlerts ? "Siliniyor..." : "Tumunu sil")
+                        Text(viewModel.isDeletingAlerts ? L10n.string("family.clearing") : L10n.string("family.clear_all"))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(AppTheme.danger)
                             .padding(.horizontal, 12)
@@ -271,7 +271,7 @@ struct FamilyView: View {
             }
 
             if viewModel.alerts.isEmpty {
-                Text("Sana iletilmis aktif bir gecikme uyarisi yok.")
+                Text(L10n.string("family.no_active_alerts"))
                     .font(.footnote)
                     .foregroundStyle(AppTheme.textSecondary)
                     .padding(18)
@@ -327,7 +327,7 @@ struct FamilyView: View {
                             .disabled(viewModel.isDeletingAlerts)
                         }
 
-                        Text("\(formattedDate(alert.scheduledTime)) dozunda gecikme gorundu.")
+                        Text(L10n.format("family.overdue_at", formattedDate(alert.scheduledTime)))
                             .font(.footnote)
                             .foregroundStyle(AppTheme.textSecondary)
                     }

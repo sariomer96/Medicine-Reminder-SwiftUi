@@ -126,7 +126,7 @@ private struct AppRootView: View {
 
             if let activeGuest = users.first(where: { $0.isGuest && $0.isActive }) {
                 hasActiveSession = true
-                sessionDisplayName = activeGuest.userId == "guest" ? "Guest" : "Misafir"
+                sessionDisplayName = L10n.string("common.guest")
                 return
             }
 
@@ -178,7 +178,7 @@ private struct AppRootView: View {
             return fallbackEmail
         }
 
-        return "Kullanici"
+        return L10n.string("common.user")
     }
 }
 

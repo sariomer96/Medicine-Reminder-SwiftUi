@@ -31,12 +31,12 @@ final class RegisterViewModel: ObservableObject {
         let trimmedConfirmPassword = confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedFullName.isEmpty, !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
-            errorMessage = "Ad soyad, e-posta ve sifre zorunludur."
+            errorMessage = L10n.string("auth.error_required_full_name_email_password")
             return
         }
 
         guard trimmedPassword == trimmedConfirmPassword else {
-            errorMessage = "Sifreler birbiriyle eslesmiyor."
+            errorMessage = L10n.string("auth.error_passwords_do_not_match")
             return
         }
 

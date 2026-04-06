@@ -20,17 +20,17 @@ enum AuthRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emailPasswordNotEnabled:
-            return "Firebase Authentication icinde Email/Password giris yontemi aktif degil."
+            return L10n.string("auth.error_email_password_not_enabled")
         case .invalidEmail:
-            return "Gecersiz bir e-posta adresi girdiniz."
+            return L10n.string("auth.error_invalid_email")
         case .weakPassword:
-            return "Sifre en az 6 karakter olmali."
+            return L10n.string("auth.error_weak_password")
         case .emailAlreadyInUse:
-            return "Bu e-posta adresi zaten kullanimda."
+            return L10n.string("auth.error_email_already_in_use")
         case .invalidCredentials:
-            return "E-posta veya sifre hatali."
+            return L10n.string("auth.error_invalid_credentials")
         case .networkError:
-            return "Ag baglantisinda bir sorun olustu. Internet baglantinizi kontrol edin."
+            return L10n.string("auth.error_network")
         case .unknown(let message):
             return message
         }
@@ -116,9 +116,7 @@ final class AuthRepository: AuthRepositoryProtocol {
         case .networkError:
             return AuthRepositoryError.networkError
         case .internalError:
-            return AuthRepositoryError.unknown(
-                "Firebase icinde dahili bir hata olustu. Email/Password giris yonteminin aktif oldugunu kontrol edin."
-            )
+            return AuthRepositoryError.unknown(L10n.string("auth.error_internal_firebase"))
         default:
             return AuthRepositoryError.unknown(error.localizedDescription)
         }

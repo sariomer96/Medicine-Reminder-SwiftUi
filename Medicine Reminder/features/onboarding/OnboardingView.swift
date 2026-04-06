@@ -32,23 +32,23 @@ enum OnboardingPage: Int, CaseIterable {
     var title: String {
         switch self {
         case .pillTracking:
-            return "Ilaclarini takip et"
+            return L10n.string("onboarding.track_medicine_title")
         case .familyPillTracking:
-            return "Aile takibini kolaylastir"
+            return L10n.string("onboarding.family_tracking_title")
         }
     }
 
     var description: String {
         switch self {
         case .pillTracking:
-            return "Ilac saatlerini duzenli takip et ve gunluk rutinini aksatma."
+            return L10n.string("onboarding.track_medicine_description")
         case .familyPillTracking:
-            return "Sevdiklerinin ilac duzenini tek yerden kontrol et ve haberdar ol."
+            return L10n.string("onboarding.family_tracking_description")
         }
     }
 
     var buttonTitle: String {
-        isLastPage ? "Basla" : "Devam et"
+        isLastPage ? L10n.string("onboarding.start") : L10n.string("onboarding.continue")
     }
 
     var isLastPage: Bool {

@@ -28,15 +28,17 @@ struct AllMedicationsView: View {
     private let medicationLogStore = MedicationLogStore()
 
     private let weekdayOrder = [2, 3, 4, 5, 6, 7, 1]
-    private let weekdayTitles = [
-        1: "Paz",
-        2: "Pzt",
-        3: "Sal",
-        4: "Car",
-        5: "Per",
-        6: "Cum",
-        7: "Cmt"
-    ]
+    private var weekdayTitles: [Int: String] {
+        [
+            1: L10n.string("weekday.sunday.short"),
+            2: L10n.string("weekday.monday.short"),
+            3: L10n.string("weekday.tuesday.short"),
+            4: L10n.string("weekday.wednesday.short"),
+            5: L10n.string("weekday.thursday.short"),
+            6: L10n.string("weekday.friday.short"),
+            7: L10n.string("weekday.saturday.short")
+        ]
+    }
 
     private var activeUser: LocalUser? {
         users.first(where: \.isActive)
@@ -88,28 +90,28 @@ struct AllMedicationsView: View {
                 .padding(.bottom, 24)
             }
         }
-        .navigationTitle("Tum ilaclarim")
+        .navigationTitle(L10n.string("medication.all.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
         .dismissKeyboardOnTap()
         .alert(
-            "Ilaci kaldir",
+            L10n.string("medication.remove_alert_title"),
             isPresented: Binding(
                 get: { medicationPendingDeletionId != nil },
                 set: { if !$0 { medicationPendingDeletionId = nil } }
             ),
             presenting: medicationPendingDeletion
         ) { medication in
-            Button("Vazgec", role: .cancel) {
+            Button(L10n.string("common.cancel"), role: .cancel) {
                 medicationPendingDeletionId = nil
             }
 
-            Button("Ilaci kaldir", role: .destructive) {
+            Button(L10n.string("medication.remove_alert_title"), role: .destructive) {
                 Task {
                     await removeMedication(medicationId: medication.medicationId)
                 }
             }
         } message: { medication in
-            Text("\(medication.name) kaldirmak istediginizden emin misiniz ?")
+            Text(L10n.format("medication.remove_confirmation", medication.name))
         }
         .sheet(item: $medicationBeingEdited) { medication in
             editMedicationSheet(for: medication)
@@ -123,11 +125,11 @@ struct AllMedicationsView: View {
                 .font(.system(size: 58))
                 .foregroundStyle(AppTheme.primary)
 
-            Text("Henuz ilac eklenmedi")
+            Text(L10n.string("medication.empty_title"))
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundStyle(AppTheme.textPrimary)
 
-            Text("Ilac ekledikten sonra tekrar gunlerini ve saatlerini burada duzenleyebilirsin.")
+            Text(L10n.string("medication.empty_description"))
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -170,7 +172,7 @@ struct AllMedicationsView: View {
                 Button {
                     prepareEditDraft(for: medication)
                 } label: {
-                    Label("Duzenle", systemImage: "slider.horizontal.3")
+                    Label(L10n.string("common.edit"), systemImage: "slider.horizontal.3")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.primary)
                         .frame(maxWidth: .infinity)
@@ -183,7 +185,7 @@ struct AllMedicationsView: View {
                 Button {
                     medicationPendingDeletionId = medication.medicationId
                 } label: {
-                    Label("Kaldir", systemImage: "trash")
+                    Label(L10n.string("common.remove"), systemImage: "trash")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.danger)
                         .frame(maxWidth: .infinity)
@@ -216,7 +218,7 @@ struct AllMedicationsView: View {
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(AppTheme.textPrimary)
 
-                            Text("Bildirim gunlerini ve saatlerini buradan guncelleyebilirsin.")
+                            Text(L10n.string("medication.update_hint"))
                                 .font(.subheadline)
                                 .foregroundStyle(AppTheme.textSecondary)
                         }
@@ -229,7 +231,7 @@ struct AllMedicationsView: View {
                                 await saveMedicationEdits(for: medication)
                             }
                         } label: {
-                            Text(isSyncing ? "Kaydediliyor..." : "Degisiklikleri kaydet")
+                            Text(isSyncing ? L10n.string("common.loading_saving") : L10n.string("medication.save_changes"))
                                 .font(.headline)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
@@ -246,7 +248,7 @@ struct AllMedicationsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Kapat") {
+                    Button(L10n.string("common.close")) {
                         medicationBeingEdited = nil
                     }
                     .foregroundStyle(AppTheme.textSecondary)
@@ -258,7 +260,7 @@ struct AllMedicationsView: View {
     private var editDaysCard: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack {
-                Text("Gunler")
+                Text(L10n.string("medication.days"))
                     .font(.headline)
                     .foregroundStyle(AppTheme.textPrimary)
 
@@ -267,7 +269,7 @@ struct AllMedicationsView: View {
                 Button {
                     draftSelectedWeekdays = Set(weekdayOrder)
                 } label: {
-                    Label("Her gun", systemImage: areAllDraftDaysSelected ? "checkmark.circle.fill" : "calendar.badge.plus")
+                    Label(L10n.string("weekday.every_day"), systemImage: areAllDraftDaysSelected ? "checkmark.circle.fill" : "calendar.badge.plus")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(areAllDraftDaysSelected ? .white : AppTheme.primary)
                         .padding(.horizontal, 12)
@@ -311,7 +313,7 @@ struct AllMedicationsView: View {
     private var editTimesCard: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack {
-                Text("Saatler")
+                Text(L10n.string("medication.times"))
                     .font(.headline)
                     .foregroundStyle(AppTheme.textPrimary)
 
@@ -320,7 +322,7 @@ struct AllMedicationsView: View {
                 Button {
                     draftReminderTimes.append(Date.now)
                 } label: {
-                    Label("Saat ekle", systemImage: "plus")
+                    Label(L10n.string("medication.add_time"), systemImage: "plus")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(AppTheme.primary)
                 }
@@ -395,7 +397,7 @@ struct AllMedicationsView: View {
             .compactMap(timeString(from:))
 
         guard !updatedWeekdays.isEmpty, !updatedTimes.isEmpty else {
-            errorMessage = "Lutfen en az bir gun ve bir saat sec."
+            errorMessage = L10n.string("medication.validation_day_and_time")
             return
         }
 
@@ -441,7 +443,7 @@ struct AllMedicationsView: View {
                         )
                     } catch {
                         await MainActor.run {
-                            self.errorMessage = "Ilac guncellendi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                            self.errorMessage = L10n.format("medication.updated_cloud_sync_background_failed", error.localizedDescription)
                         }
                     }
                 }
@@ -450,8 +452,8 @@ struct AllMedicationsView: View {
             medicationBeingEdited = nil
         } catch {
             errorMessage = activeUser?.isGuest == true
-                ? "Ilac guncellenemedi: \(error.localizedDescription)"
-                : "Ilac cihaza guncellendi ama buluta senkronize edilemedi: \(error.localizedDescription)"
+                ? L10n.format("medication.update_failed", error.localizedDescription)
+                : L10n.format("medication.updated_local_cloud_failed", error.localizedDescription)
         }
 
         isSyncing = false
@@ -460,7 +462,7 @@ struct AllMedicationsView: View {
     private func removeMedication(medicationId: String) async {
         guard let medication = medications.first(where: { $0.medicationId == medicationId }) else {
             medicationPendingDeletionId = nil
-            errorMessage = "Silinecek ilac bulunamadi."
+            errorMessage = L10n.string("medication.not_found_for_deletion")
             return
         }
 
@@ -498,7 +500,7 @@ struct AllMedicationsView: View {
                         )
                     } catch {
                         await MainActor.run {
-                            self.errorMessage = "Ilac kaldirildi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                            self.errorMessage = L10n.format("medication.removed_cloud_sync_background_failed", error.localizedDescription)
                         }
                     }
                 }
@@ -508,8 +510,8 @@ struct AllMedicationsView: View {
         } catch {
             hiddenMedicationIds.remove(medicationId)
             errorMessage = activeUser?.isGuest == true
-                ? "Ilac kaldirilamadi: \(error.localizedDescription)"
-                : "Ilac cihazdan kaldirilamadi ya da buluta senkronize edilemedi: \(error.localizedDescription)"
+                ? L10n.format("medication.remove_failed", error.localizedDescription)
+                : L10n.format("medication.removed_local_cloud_failed", error.localizedDescription)
         }
 
         isSyncing = false
@@ -519,7 +521,7 @@ struct AllMedicationsView: View {
         let orderedDays = weekdayOrder.filter { medication.selectedWeekdays.contains($0) }
 
         if orderedDays.count == weekdayOrder.count {
-            return "Her gun"
+            return L10n.string("weekday.every_day")
         }
 
         return orderedDays

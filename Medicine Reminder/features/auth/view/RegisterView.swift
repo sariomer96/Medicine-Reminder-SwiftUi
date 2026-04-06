@@ -26,26 +26,26 @@ struct RegisterView: View {
                      
                     VStack(alignment: .leading, spacing: 18) {
                         AuthField(
-                            title: "Ad Soyad",
-                            placeholder: "Adinizi girin",
+                            title: L10n.string("auth.full_name"),
+                            placeholder: L10n.string("auth.full_name_placeholder"),
                             text: $fullName
                         )
 
                         AuthField(
-                            title: "E-posta",
-                            placeholder: "ornek@mail.com",
+                            title: L10n.string("auth.email"),
+                            placeholder: L10n.string("auth.email_placeholder"),
                             text: $email
                         )
 
                         AuthSecureField(
-                            title: "Sifre",
-                            placeholder: "Sifrenizi olusturun",
+                            title: L10n.string("auth.password"),
+                            placeholder: L10n.string("auth.password_create_placeholder"),
                             text: $password
                         )
 
                         AuthSecureField(
-                            title: "Sifre Tekrar",
-                            placeholder: "Sifrenizi tekrar girin",
+                            title: L10n.string("auth.password_confirm"),
+                            placeholder: L10n.string("auth.password_confirm_placeholder"),
                             text: $confirmPassword
                         )
 
@@ -71,7 +71,7 @@ struct RegisterView: View {
                                         .progressViewStyle(.circular)
                                         .tint(.white)
                                 } else {
-                                    Text("Kayit ol")
+                                    Text(L10n.string("auth.register"))
                                         .font(.headline)
                                         .foregroundStyle(.white)
                                 }
@@ -104,7 +104,7 @@ struct RegisterView: View {
                 dismiss()
             }
         }
-        .navigationTitle("Kayit Ol")
+        .navigationTitle(L10n.string("auth.register_title"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -114,7 +114,7 @@ struct RegisterView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                        Text("Geri")
+                        Text(L10n.string("common.back"))
                     }
                     .foregroundStyle(AppTheme.primary)
                 }

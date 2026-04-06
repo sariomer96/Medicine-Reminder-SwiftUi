@@ -60,7 +60,7 @@ final class FamilyViewModel: ObservableObject {
 
         isGuestSession = activeUser.isGuest
         guard !activeUser.isGuest else {
-            currentUserName = "Misafir"
+            currentUserName = L10n.string("common.guest")
             shareCode = nil
             followers = []
             following = []
@@ -107,7 +107,7 @@ final class FamilyViewModel: ObservableObject {
         do {
             let invite = try await familyStore.generateInviteCode(for: currentProfile)
             shareCode = invite.code
-            successMessage = "Takip kodun hazir. Kopyalayip aile bireyinle paylasabilirsin."
+            successMessage = L10n.string("family.code_ready_to_share")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -117,13 +117,13 @@ final class FamilyViewModel: ObservableObject {
 
     func redeemInviteCode(activeUser: LocalUser?) async {
         guard let activeUser, !activeUser.isGuest else {
-            errorMessage = "Misafir oturumunda aile eslesmesi yapilamaz."
+            errorMessage = L10n.string("family.guest_cannot_match")
             return
         }
 
         let normalizedCode = FamilyStore.normalizeInviteCode(inviteCodeInput)
         guard !normalizedCode.isEmpty else {
-            errorMessage = "Lutfen bir davet kodu gir."
+            errorMessage = L10n.string("family.enter_invite_code")
             return
         }
 
@@ -140,7 +140,7 @@ final class FamilyViewModel: ObservableObject {
             let profile = try await familyStore.redeemInviteCode(normalizedCode, caregiver: currentProfile)
             inviteCodeInput = ""
             await load(activeUser: activeUser)
-            successMessage = "\(profile.name) icin aile takibi aktif edildi."
+            successMessage = L10n.format("family.tracking_enabled_for", profile.name)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -151,7 +151,7 @@ final class FamilyViewModel: ObservableObject {
     func copyInviteCode() {
         guard let shareCode else { return }
         UIPasteboard.general.string = shareCode
-        successMessage = "Davet kodu panoya kopyalandi."
+        successMessage = L10n.string("family.code_copied")
     }
 
     func removeAlert(_ alert: CareAlert) async {
@@ -163,7 +163,7 @@ final class FamilyViewModel: ObservableObject {
         do {
             try await familyStore.removeAlert(alertId: alertId)
             alerts.removeAll { $0.id == alert.id }
-            successMessage = "Gecikme uyarisi kaldirildi."
+            successMessage = L10n.string("family.alert_removed")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -181,7 +181,7 @@ final class FamilyViewModel: ObservableObject {
         do {
             try await familyStore.removeAlerts(alertIds: alertIds)
             alerts = []
-            successMessage = "Tum gecikme uyarilari temizlendi."
+            successMessage = L10n.string("family.all_alerts_cleared")
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -12,8 +12,6 @@ struct AddMedicationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var modelContext
 
-    private let weekdaySymbols = ["Pzt", "Sal", "Car", "Per", "Cum", "Cmt", "Paz"]
-
     @StateObject private var viewModel = AddMedicationViewModel()
     @State private var showsSearchSheet = false
     @State private var selectedDays: Set<String> = []
@@ -25,6 +23,18 @@ struct AddMedicationView: View {
 
     private var areAllDaysSelected: Bool {
         selectedDays.count == weekdaySymbols.count
+    }
+
+    private var weekdaySymbols: [String] {
+        [
+            L10n.string("weekday.monday.short"),
+            L10n.string("weekday.tuesday.short"),
+            L10n.string("weekday.wednesday.short"),
+            L10n.string("weekday.thursday.short"),
+            L10n.string("weekday.friday.short"),
+            L10n.string("weekday.saturday.short"),
+            L10n.string("weekday.sunday.short")
+        ]
     }
 
     var body: some View {
@@ -62,7 +72,7 @@ struct AddMedicationView: View {
                         .ignoresSafeArea()
                 )
         }
-        .navigationTitle("Yeni ilac ekle")
+        .navigationTitle(L10n.string("medication.add.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
         .dismissKeyboardOnTap()
         .sheet(isPresented: $showsSearchSheet) {
@@ -83,7 +93,7 @@ struct AddMedicationView: View {
 
     private var medicationCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Ilac bilgisi")
+            Text(L10n.string("medication.info"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
@@ -100,11 +110,11 @@ struct AddMedicationView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(viewModel.selectedMedicationName.isEmpty ? "Ilac sec" : viewModel.selectedMedicationName)
+                        Text(viewModel.selectedMedicationName.isEmpty ? L10n.string("medication.select") : viewModel.selectedMedicationName)
                             .font(.headline)
                             .foregroundStyle(viewModel.selectedMedicationName.isEmpty ? AppTheme.textSecondary : AppTheme.textPrimary)
 
-                        Text("Ilaci degistirmek veya yenisini yazmak icin dokun")
+                        Text(L10n.string("medication.change_hint"))
                             .font(.footnote)
                             .foregroundStyle(AppTheme.textSecondary)
                     }
@@ -133,13 +143,13 @@ struct AddMedicationView: View {
 
     private var scheduleCard: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Kullanim plani")
+            Text(L10n.string("medication.plan"))
                 .font(.headline)
                 .foregroundStyle(AppTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Gunler")
+                    Text(L10n.string("medication.days"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.textPrimary)
 
@@ -148,7 +158,7 @@ struct AddMedicationView: View {
                     Button {
                         selectedDays = Set(weekdaySymbols)
                     } label: {
-                        Label("Her gun", systemImage: areAllDaysSelected ? "checkmark.circle.fill" : "calendar.badge.plus")
+                        Label(L10n.string("weekday.every_day"), systemImage: areAllDaysSelected ? "checkmark.circle.fill" : "calendar.badge.plus")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(areAllDaysSelected ? .white : AppTheme.primary)
                             .padding(.horizontal, 12)
@@ -159,7 +169,7 @@ struct AddMedicationView: View {
                     .buttonStyle(.plain)
 
                     if !selectedDays.isEmpty {
-                        Button("Temizle") {
+                        Button(L10n.string("common.clear")) {
                             selectedDays.removeAll()
                         }
                         .font(.footnote.weight(.semibold))
@@ -192,7 +202,7 @@ struct AddMedicationView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Saatler")
+                    Text(L10n.string("medication.times"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.textPrimary)
 
@@ -201,7 +211,7 @@ struct AddMedicationView: View {
                     Button {
                         dosageTimes.append(Date.now)
                     } label: {
-                        Label("Saat ekle", systemImage: "plus")
+                        Label(L10n.string("medication.add_time"), systemImage: "plus")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(AppTheme.primary)
                     }
@@ -273,7 +283,7 @@ struct AddMedicationView: View {
                 }
             }
         } label: {
-            Text(viewModel.isSaving ? "Kaydediliyor..." : "Ilaci kaydet")
+            Text(viewModel.isSaving ? L10n.string("common.loading_saving") : L10n.string("medication.save"))
                 .font(.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -293,16 +303,16 @@ struct AddMedicationView: View {
 
                 VStack(alignment: .leading, spacing: 18) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Ilac ara")
+                        Text(L10n.string("medication.search_title"))
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(AppTheme.textPrimary)
 
-                        Text("Ilaci ara, listeden sec ya da yazdigin isimle ekle.")
+                        Text(L10n.string("medication.search_description"))
                             .font(.subheadline)
                             .foregroundStyle(AppTheme.textSecondary)
                     }
 
-                    TextField("Ilac adiyla ara", text: $viewModel.medicationSearchText)
+                    TextField(L10n.string("medication.search_placeholder"), text: $viewModel.medicationSearchText)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 16)
                         .background(AppTheme.surface)
@@ -321,7 +331,7 @@ struct AddMedicationView: View {
                     if viewModel.isLoading {
                         HStack(spacing: 10) {
                             ProgressView()
-                            Text("Ilac listesi yukleniyor...")
+                            Text(L10n.string("medication.list_loading"))
                                 .font(.footnote)
                                 .foregroundStyle(AppTheme.textSecondary)
                         }
@@ -349,7 +359,7 @@ struct AddMedicationView: View {
                                                 .font(.headline)
                                                 .foregroundStyle(AppTheme.textPrimary)
 
-                                            Text("Ilaci sec ve plani olusturmaya devam et")
+                                            Text(L10n.string("medication.select_and_continue"))
                                                 .font(.footnote)
                                                 .foregroundStyle(AppTheme.textSecondary)
                                         }
@@ -379,11 +389,11 @@ struct AddMedicationView: View {
                         showsSearchSheet = false
                     } label: {
                         VStack(spacing: 4) {
-                            Text("\"\(viewModel.resolvedCustomMedicationName)\" olarak ekle")
+                            Text(L10n.format("medication.add_as_custom", viewModel.resolvedCustomMedicationName))
                                 .font(.headline)
                                 .foregroundStyle(.white)
 
-                            Text("Ilaci listede bulamazsan bu isimle devam et")
+                            Text(L10n.string("medication.not_in_list_continue"))
                                 .font(.footnote)
                                 .foregroundStyle(.white.opacity(0.82))
                         }

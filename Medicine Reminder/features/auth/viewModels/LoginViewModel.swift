@@ -28,7 +28,7 @@ final class LoginViewModel: ObservableObject {
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
-            errorMessage = "E-posta ve sifre zorunludur."
+            errorMessage = L10n.string("auth.error_required_email_password")
             return
         }
 
@@ -62,7 +62,12 @@ final class LoginViewModel: ObservableObject {
 
     func loginAsGuest(modelContext: NSManagedObjectContext) {
         errorMessage = nil
-        activateSession(userId: "guest", isGuest: true, displayName: "Guest", modelContext: modelContext)
+        activateSession(
+            userId: "guest",
+            isGuest: true,
+            displayName: L10n.string("common.guest"),
+            modelContext: modelContext
+        )
     }
 
     func restoreSessionIfNeeded(hasRestoredSession: inout Bool, modelContext: NSManagedObjectContext) {
@@ -95,7 +100,7 @@ final class LoginViewModel: ObservableObject {
                     activateSession(
                         userId: activeGuest.userId,
                         isGuest: true,
-                        displayName: "Guest",
+                        displayName: L10n.string("common.guest"),
                         modelContext: modelContext
                     )
                     return
@@ -111,7 +116,7 @@ final class LoginViewModel: ObservableObject {
                     try modelContext.save()
                 }
             } catch {
-                errorMessage = "Oturum geri yuklenemedi: \(error.localizedDescription)"
+                errorMessage = L10n.format("auth.error_restore_session_failed", error.localizedDescription)
             }
         }
     }
@@ -142,7 +147,7 @@ final class LoginViewModel: ObservableObject {
             sessionDisplayName = displayName
             errorMessage = nil
         } catch {
-            errorMessage = "Oturum acilamadi: \(error.localizedDescription)"
+            errorMessage = L10n.format("auth.error_open_session_failed", error.localizedDescription)
             isLoggedIn = false
         }
     }
@@ -158,7 +163,7 @@ final class LoginViewModel: ObservableObject {
             return fallbackEmail
         }
 
-        return "Kullanici"
+        return L10n.string("common.user")
     }
 
     private func fetchSessionDisplayName(userId: String, fallbackEmail: String?) async -> String {

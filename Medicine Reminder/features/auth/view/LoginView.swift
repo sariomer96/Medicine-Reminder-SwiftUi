@@ -30,18 +30,18 @@ struct LoginView: View {
 
                         VStack(alignment: .leading, spacing: 18) {
                             AuthField(
-                                title: "E-posta",
-                                placeholder: "ornek@mail.com",
+                                title: L10n.string("auth.email"),
+                                placeholder: L10n.string("auth.email_placeholder"),
                                 text: $email
                             )
 
                             AuthSecureField(
-                                title: "Sifre",
-                                placeholder: "Sifrenizi girin",
+                                title: L10n.string("auth.password"),
+                                placeholder: L10n.string("auth.password_placeholder"),
                                 text: $password
                             )
 
-                            Toggle("Beni hatirla", isOn: $rememberMe)
+                            Toggle(L10n.string("auth.remember_me"), isOn: $rememberMe)
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(AppTheme.textPrimary)
                                 .tint(AppTheme.primary)
@@ -63,7 +63,7 @@ struct LoginView: View {
                                             .progressViewStyle(.circular)
                                             .tint(.white)
                                     } else {
-                                        Text("Giris yap")
+                                        Text(L10n.string("auth.login"))
                                             .font(.headline)
                                             .foregroundStyle(.white)
                                     }
@@ -79,7 +79,7 @@ struct LoginView: View {
                             Button {
                                 viewModel.loginAsGuest(modelContext: modelContext)
                             } label: {
-                                Text("Misafir olarak giris yap")
+                                Text(L10n.string("auth.login_as_guest"))
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(AppTheme.primary)
                                     .frame(maxWidth: .infinity)
@@ -89,7 +89,7 @@ struct LoginView: View {
                             NavigationLink {
                                 RegisterView()
                             } label: {
-                                Text("Kayit Ol")
+                                Text(L10n.string("auth.register_title"))
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(AppTheme.primary)
                                     .frame(maxWidth: .infinity)

@@ -68,19 +68,19 @@ final class AddMedicationViewModel: ObservableObject {
         let trimmedMedicationName = selectedMedicationName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmedMedicationName.isEmpty else {
-            errorMessage = "Lutfen bir ilac sec."
+            errorMessage = L10n.string("medication.validation_select")
             saveSucceeded = false
             return
         }
 
         guard !selectedDays.isEmpty else {
-            errorMessage = "Lutfen en az bir gun sec."
+            errorMessage = L10n.string("medication.validation_day")
             saveSucceeded = false
             return
         }
 
         guard !dosageTimes.isEmpty else {
-            errorMessage = "Lutfen en az bir saat ekle."
+            errorMessage = L10n.string("medication.validation_time")
             saveSucceeded = false
             return
         }
@@ -131,7 +131,7 @@ final class AddMedicationViewModel: ObservableObject {
             )
 
             if notificationStatus == .denied {
-                infoMessage = "Ilac kaydedildi, fakat bildirim izni kapali oldugu icin hatirlatma kurulmedi."
+                infoMessage = L10n.string("medication.saved_notifications_denied")
             }
 
             guard !activeUser.isGuest else {
@@ -162,7 +162,7 @@ final class AddMedicationViewModel: ObservableObject {
                     )
                 } catch {
                     await MainActor.run {
-                        self.infoMessage = "Ilac kaydedildi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                        self.infoMessage = L10n.format("medication.saved_cloud_sync_background_failed", error.localizedDescription)
                     }
                 }
             }
@@ -188,14 +188,14 @@ final class AddMedicationViewModel: ObservableObject {
 
                 await MainActor.run {
                     self.medicationNames = names
-                    self.errorMessage = names.isEmpty ? "Ilac listesi bos geldi." : nil
+                    self.errorMessage = names.isEmpty ? L10n.string("medication.list_empty") : nil
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
                     self.medicationNames = []
                     self.selectedMedicationName = ""
-                    self.errorMessage = "Ilac listesi yuklenemedi: \(error.localizedDescription)"
+                    self.errorMessage = L10n.format("medication.list_load_failed", error.localizedDescription)
                     self.hasLoadedMedicationNames = false
                     self.isLoading = false
                 }
@@ -237,26 +237,26 @@ final class AddMedicationViewModel: ObservableObject {
         do {
             let users = try modelContext.fetch(LocalUser.fetchRequest())
             guard let activeUser = users.first(where: \.isActive) else {
-                errorMessage = "Aktif kullanici bulunamadi."
+                errorMessage = L10n.string("medication.active_user_not_found")
                 return nil
             }
 
             return activeUser
         } catch {
-            errorMessage = "Aktif kullanici okunamadi: \(error.localizedDescription)"
+            errorMessage = L10n.format("medication.active_user_read_failed", error.localizedDescription)
             return nil
         }
     }
 
     private func weekdayValues(for selectedDays: Set<String>) -> [Int] {
         let weekdayMap = [
-            "Paz": 1,
-            "Pzt": 2,
-            "Sal": 3,
-            "Car": 4,
-            "Per": 5,
-            "Cum": 6,
-            "Cmt": 7
+            L10n.string("weekday.sunday.short"): 1,
+            L10n.string("weekday.monday.short"): 2,
+            L10n.string("weekday.tuesday.short"): 3,
+            L10n.string("weekday.wednesday.short"): 4,
+            L10n.string("weekday.thursday.short"): 5,
+            L10n.string("weekday.friday.short"): 6,
+            L10n.string("weekday.saturday.short"): 7
         ]
 
         return selectedDays.compactMap { weekdayMap[$0] }
@@ -280,14 +280,14 @@ final class AddMedicationViewModel: ObservableObject {
 
     private func saveFailureMessage(for error: Error, localSaveCompleted: Bool, isGuest: Bool) -> String {
         if !localSaveCompleted {
-            return "Ilac kaydedilemedi: \(error.localizedDescription)"
+            return L10n.format("medication.save_failed", error.localizedDescription)
         }
 
         if isGuest {
-            return "Ilac kaydedilemedi: \(error.localizedDescription)"
+            return L10n.format("medication.save_failed", error.localizedDescription)
         }
 
-        return "Ilac cihaza kaydedildi ama buluta senkronize edilemedi: \(error.localizedDescription)"
+        return L10n.format("medication.saved_local_cloud_failed", error.localizedDescription)
     }
 
     private func fetchMedicationLogs(
@@ -309,7 +309,7 @@ private enum AddMedicationDataError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .fileNotFound:
-            return "medDB.json bulunamadi."
+            return L10n.string("medication.database_file_missing")
         }
     }
 }

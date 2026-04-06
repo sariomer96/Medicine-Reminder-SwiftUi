@@ -147,7 +147,7 @@ struct HomeView: View {
                         Button {
                             router.push(.allMedications)
                         } label: {
-                            Text("Tum Ilaclarim")
+                            Text(L10n.string("home.all_medications"))
                                 .font(.headline)
                                 .foregroundStyle(AppTheme.primary)
                                 .frame(maxWidth: .infinity)
@@ -164,7 +164,7 @@ struct HomeView: View {
                         Button {
                             router.push(.addMedication)
                         } label: {
-                            Text("Yeni ilac ekle")
+                            Text(L10n.string("home.add_new_medication"))
                                 .font(.headline)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
@@ -211,11 +211,11 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Aile Takibi")
+                        Text(L10n.string("home.family_tracking"))
                             .font(.headline)
                             .foregroundStyle(AppTheme.textPrimary)
 
-                        Text(summary.isGuestSession ? "Hesapla aktif edilir" : "Kodla baglan ve gecikmeleri paylas")
+                        Text(summary.isGuestSession ? L10n.string("home.family_requires_account") : L10n.string("home.family_connect_and_share"))
                             .font(.footnote)
                             .foregroundStyle(AppTheme.textSecondary)
                     }
@@ -228,7 +228,7 @@ struct HomeView: View {
                 }
 
                 if summary.isGuestSession {
-                    Text("Misafir oturumunda aile eslesmesi kapali. Giris yaptiginda takip kodu uretebilirsin.")
+                    Text(L10n.string("home.family_guest_disabled"))
                         .font(.subheadline)
                         .foregroundStyle(AppTheme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -237,12 +237,12 @@ struct HomeView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 } else {
                     HStack(spacing: 10) {
-                        summaryChip(title: "Takipciler", value: "\(summary.followerCount)")
-                        summaryChip(title: "Takip ettiklerin", value: "\(summary.followingCount)")
-                        summaryChip(title: "Aktif uyari", value: "\(summary.overdueAlertCount)")
+                        summaryChip(title: L10n.string("home.followers"), value: "\(summary.followerCount)")
+                        summaryChip(title: L10n.string("home.following"), value: "\(summary.followingCount)")
+                        summaryChip(title: L10n.string("home.active_alert"), value: "\(summary.overdueAlertCount)")
                     }
 
-                    Text(summary.shareCode.map { "Paylasilabilir kod: \($0)" } ?? "Takip kodun henuz hazir degil.")
+                    Text(summary.shareCode.map { L10n.format("home.share_code_ready", $0) } ?? L10n.string("home.share_code_not_ready"))
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(summary.shareCode == nil ? AppTheme.textSecondary : AppTheme.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -300,7 +300,7 @@ struct HomeView: View {
                 let medication = medicationMap[log.medicationId]
                 return OverdueDosePayload(
                     logId: log.logId,
-                    medicationName: medication?.name ?? "Ilac",
+                    medicationName: medication?.name ?? L10n.string("home.default_medication_name"),
                     dosage: medication?.dosage ?? "",
                     scheduledTime: log.scheduledTime
                 )
@@ -326,7 +326,7 @@ struct HomeView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Merhaba")
+                Text(L10n.string("home.greeting"))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .textCase(.uppercase)
                     .foregroundStyle(AppTheme.textSecondary)
@@ -397,17 +397,17 @@ struct HomeView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Baslamak icin ilac ekle")
+                        Text(L10n.string("home.empty_state_title"))
                             .font(.headline)
                             .foregroundStyle(AppTheme.textPrimary)
 
-                        Text("Ilac eklediginde siradaki doz ve bildirim bilgilerini burada goreceksin.")
+                        Text(L10n.string("home.empty_state_description"))
                             .font(.footnote)
                             .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
 
-                Text("Ilac ekle")
+                Text(L10n.string("home.add_medication"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(AppTheme.primary)
                     .padding(.horizontal, 14)
@@ -431,7 +431,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Siradaki doz")
+                    Text(L10n.string("home.next_dose"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.9))
 
@@ -446,7 +446,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text("\(nextDoseItems(nextDoseInfo: nextDoseInfo).count) ilac")
+                Text(L10n.format("home.medication_count_plural", nextDoseItems(nextDoseInfo: nextDoseInfo).count))
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 11)
@@ -495,7 +495,7 @@ struct HomeView: View {
         if !doses.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Bekleyen dozlar")
+                    Text(L10n.string("home.pending_doses"))
                         .font(.headline)
                         .foregroundStyle(AppTheme.textPrimary)
 
@@ -583,17 +583,17 @@ struct HomeView: View {
         }
 
         let weekday = Calendar.current.component(.weekday, from: scheduledTime)
-        let turkishWeekdays = [
-            1: "Pazar",
-            2: "Pazartesi",
-            3: "Sali",
-            4: "Carsamba",
-            5: "Persembe",
-            6: "Cuma",
-            7: "Cumartesi"
+        let localizedWeekdays = [
+            1: L10n.string("weekday.sunday.long"),
+            2: L10n.string("weekday.monday.long"),
+            3: L10n.string("weekday.tuesday.long"),
+            4: L10n.string("weekday.wednesday.long"),
+            5: L10n.string("weekday.thursday.long"),
+            6: L10n.string("weekday.friday.long"),
+            7: L10n.string("weekday.saturday.long")
         ]
 
-        return turkishWeekdays[weekday] ?? ""
+        return localizedWeekdays[weekday] ?? ""
     }
 
     private func formattedPendingDoseTime(_ date: Date) -> String {
