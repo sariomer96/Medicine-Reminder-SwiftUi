@@ -301,6 +301,25 @@ final class FamilyStore {
         try await batch.commit()
     }
 
+    func removeAlert(alertId: String) async throws {
+        try await db.collection(alertCollection)
+            .document(alertId)
+            .delete()
+    }
+
+    func removeAlerts(alertIds: [String]) async throws {
+        guard !alertIds.isEmpty else { return }
+
+        let batch = db.batch()
+
+        for alertId in alertIds {
+            let reference = db.collection(alertCollection).document(alertId)
+            batch.deleteDocument(reference)
+        }
+
+        try await batch.commit()
+    }
+
     private func fetchAcceptedCaregivers(for patientId: String) async throws -> [UserProfile] {
         let snapshot = try await db.collection(relationshipCollection)
             .whereField("patientId", isEqualTo: patientId)

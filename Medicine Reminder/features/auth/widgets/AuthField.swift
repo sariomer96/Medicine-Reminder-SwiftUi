@@ -1,4 +1,4 @@
-import SwiftUICore
+
 import SwiftUI
 
 public struct AuthField: View {

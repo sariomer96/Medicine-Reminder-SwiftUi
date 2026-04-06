@@ -18,6 +18,7 @@ final class NotificationRouteStore: ObservableObject {
     static let shared = NotificationRouteStore()
 
     @Published var pendingDoseTarget: PendingDoseTarget?
+    @Published var pendingAppRoute: AppRoute?
 
     private init() {}
 
@@ -25,7 +26,17 @@ final class NotificationRouteStore: ObservableObject {
         pendingDoseTarget = PendingDoseTarget(logId: logId)
     }
 
+    func openFamilyHub() {
+        pendingAppRoute = .familyHub
+    }
+
+    func consumePendingAppRoute() -> AppRoute? {
+        defer { pendingAppRoute = nil }
+        return pendingAppRoute
+    }
+
     func clear() {
         pendingDoseTarget = nil
+        pendingAppRoute = nil
     }
 }

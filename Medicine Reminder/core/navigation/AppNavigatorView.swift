@@ -52,6 +52,11 @@ struct AppNavigatorView: View {
         .navigationViewStyle(StackNavigationViewStyle())
         .environmentObject(router)
         .environmentObject(notificationRouteStore)
+        .onReceive(notificationRouteStore.$pendingAppRoute) { pendingRoute in
+            guard let pendingRoute else { return }
+            router.activeRoute = pendingRoute
+            notificationRouteStore.pendingAppRoute = nil
+        }
         .sheet(
             item: Binding(
                 get: { notificationRouteStore.pendingDoseTarget },
