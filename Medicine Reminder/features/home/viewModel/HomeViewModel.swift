@@ -23,6 +23,9 @@ final class HomeViewModel: ObservableObject {
             let existingUsers = try modelContext.fetch(LocalUser.fetchRequest())
             let activeUsers = existingUsers.filter(\.isActive)
             let activeGuestSession = activeUsers.contains(where: \.isGuest)
+            let signedInUserIds = activeUsers
+                .filter { !$0.isGuest }
+                .map(\.userId)
 
             for user in activeUsers {
                 user.isActive = false
@@ -31,6 +34,12 @@ final class HomeViewModel: ObservableObject {
             try modelContext.save()
 
             if !activeGuestSession {
+                for userId in signedInUserIds {
+                    Task {
+                        await DeviceTokenStore.shared.removeCurrentDeviceToken(for: userId)
+                    }
+                }
+
                 try authRepository.signOut()
             }
 

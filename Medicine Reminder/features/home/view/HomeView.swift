@@ -7,8 +7,6 @@
 
 import SwiftUI
 import CoreData
-import UserNotifications
-import UIKit
 import Combine
 
 struct HomeView: View {
@@ -27,8 +25,6 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @StateObject private var familyViewModel = FamilyViewModel()
     @State private var refreshDate = Date()
-    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
-    @State private var isRequestingNotificationPermission = false
     let sessionDisplayName: String
     let onSessionEnded: () -> Void
     private let familySyncTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
@@ -133,35 +129,14 @@ struct HomeView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        HStack(alignment: .top, spacing: 14) {
-                            greetingCard
-
-                            Button {
-                                if viewModel.signOut(modelContext: modelContext) {
-                                    onSessionEnded()
-                                }
-                            } label: {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(AppTheme.primary)
-                                    .frame(width: 44, height: 44)
-                                    .background(AppTheme.surface)
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .stroke(AppTheme.border, lineWidth: 1)
-                                    )
-                            }
-                        }
+                    VStack(alignment: .leading, spacing: 16) {
+                        greetingCard
 
                         if let errorMessage = viewModel.errorMessage {
                             Text(errorMessage)
                                 .font(.footnote)
                                 .foregroundStyle(.red)
                         }
-
-                        notificationStatusCard
 
                         nextDoseSection(nextDoseInfo: currentNextDose)
                         pendingDosesSection(pendingDoses)
@@ -184,7 +159,7 @@ struct HomeView: View {
                                         .stroke(AppTheme.border, lineWidth: 1)
                                 )
                         }
-                        .padding(.top, 24)
+                        .padding(.top, 8)
 
                         Button {
                             router.push(.addMedication)
@@ -197,16 +172,15 @@ struct HomeView: View {
                                 .background(AppTheme.primary)
                                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                         }
-                        .padding(.top, 16)
+                        .padding(.top, 8)
                     }
-                    .padding(24)
+                    .padding(16)
                 }
             }
         }
         .onAppear {
             refreshDate = Date()
             Task {
-                notificationStatus = await NotificationManager.shared.authorizationStatus()
                 await syncFamilyState()
             }
         }
@@ -214,7 +188,6 @@ struct HomeView: View {
             guard newPhase == .active else { return }
 
             Task {
-                notificationStatus = await NotificationManager.shared.authorizationStatus()
                 await syncFamilyState()
             }
         }
@@ -337,75 +310,55 @@ struct HomeView: View {
         guard shouldShowFamilySection else { return }
 
         await familyViewModel.load(activeUser: activeUser)
-
-        let overduePayloads = overdueDosePayloads(asOf: Date())
-        guard !overduePayloads.isEmpty else { return }
-
-        await familyViewModel.syncOverdueAlerts(activeUser: activeUser, doses: overduePayloads)
-        await familyViewModel.load(activeUser: activeUser)
-    }
-
-    @ViewBuilder
-    private var notificationStatusCard: some View {
-        if notificationStatus != .authorized && notificationStatus != .provisional && notificationStatus != .ephemeral {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Bildirimler")
-                    .font(.headline)
-                    .foregroundStyle(AppTheme.textPrimary)
-
-                Text(notificationStatus == .denied
-                     ? "Bildirim izni kapali. Ilac saatlerinde hatirlatma alabilmek icin Ayarlar'dan bildirimi acman gerekiyor."
-                     : "Ilac saatlerinde seni uyarmamiz icin bildirim iznini acabilirsin.")
-                    .font(.footnote)
-                    .foregroundStyle(AppTheme.textSecondary)
-
-                Button {
-                    handleNotificationButtonTap()
-                } label: {
-                    Text(notificationStatus == .denied ? "Ayarlari ac" : "Bildirimleri ac")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(notificationStatus == .denied ? AppTheme.textPrimary : .white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(notificationStatus == .denied ? AppTheme.surfaceMuted : AppTheme.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .disabled(isRequestingNotificationPermission)
-                .opacity(isRequestingNotificationPermission ? 0.7 : 1)
-            }
-            .padding(20)
-            .background(AppTheme.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(AppTheme.border, lineWidth: 1)
-            )
-        }
     }
 
     private var greetingCard: some View {
-        HStack(spacing: 14) {
-          
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.heroGradient)
+                    .frame(width: 56, height: 56)
+
+                Image(systemName: "person.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
             VStack(alignment: .leading, spacing: 6) {
                 Text("Merhaba")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .textCase(.uppercase)
                     .foregroundStyle(AppTheme.textSecondary)
 
                 Text(sessionDisplayName)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
-
-                Text("Bugunku ilac planin hazir.")
-                    .font(.footnote)
-                    .foregroundStyle(AppTheme.textSecondary)
+                    .minimumScaleFactor(0.85)
             }
 
             Spacer(minLength: 0)
+
+            Button {
+                if viewModel.signOut(modelContext: modelContext) {
+                    onSessionEnded()
+                }
+            } label: {
+                VStack(spacing: 6) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(AppTheme.primary)
+
+                   
+                }
+                .frame(width: 54, height: 54)
+                .background(AppTheme.surfaceMuted)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -413,7 +366,7 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(AppTheme.border, lineWidth: 1)
         )
-        .shadow(color: AppTheme.primary.opacity(0.08), radius: 14, x: 0, y: 8)
+        .shadow(color: AppTheme.primary.opacity(0.10), radius: 18, x: 0, y: 10)
     }
 
     private func nextDoseSection(nextDoseInfo: NextDoseInfo?) -> some View {
@@ -427,51 +380,50 @@ struct HomeView: View {
     }
 
     private var emptyMedicationCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(AppTheme.surfaceMuted)
-                        .frame(width: 52, height: 52)
+        Button {
+            router.push(.addMedication)
+        } label: {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(AppTheme.surfaceMuted)
+                            .frame(width: 52, height: 52)
 
-                    Image(systemName: "pills.circle")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(AppTheme.primary)
+                        Image(systemName: "pills.circle")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(AppTheme.primary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Baslamak icin ilac ekle")
+                            .font(.headline)
+                            .foregroundStyle(AppTheme.textPrimary)
+
+                        Text("Ilac eklediginde siradaki doz ve bildirim bilgilerini burada goreceksin.")
+                            .font(.footnote)
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Baslamak icin ilac ekle")
-                        .font(.headline)
-                        .foregroundStyle(AppTheme.textPrimary)
-
-                    Text("Ilac eklediginde siradaki doz ve bildirim bilgilerini burada goreceksin.")
-                        .font(.footnote)
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-            }
-
-            Button {
-                router.push(.addMedication)
-            } label: {
                 Text("Ilac ekle")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(AppTheme.primary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(AppTheme.surfaceMuted)
-                    .clipShape(Capsule())
+                    
             }
-            .buttonStyle(.plain)
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(AppTheme.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(AppTheme.border, lineWidth: 1)
+            )
+            .padding(.top, 24)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(AppTheme.border, lineWidth: 1)
-        )
-        .padding(.top, 24)
+        .buttonStyle(.plain)
     }
 
     private func nextDoseCard(nextDoseInfo: NextDoseInfo?) -> some View {
@@ -652,22 +604,6 @@ struct HomeView: View {
         )
     }
 
-    private func handleNotificationButtonTap() {
-        if notificationStatus == .denied {
-            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
-                return
-            }
-
-            UIApplication.shared.open(settingsURL)
-            return
-        }
-
-        Task {
-            isRequestingNotificationPermission = true
-            notificationStatus = (try? await NotificationManager.shared.requestAuthorizationIfNeeded()) ?? .denied
-            isRequestingNotificationPermission = false
-        }
-    }
 }
 
 private struct NextDoseInfo {

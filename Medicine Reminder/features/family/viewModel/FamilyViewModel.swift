@@ -27,6 +27,7 @@ final class FamilyViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isGeneratingCode = false
     @Published private(set) var isRedeemingCode = false
+    @Published private(set) var isDeletingAlerts = false
     @Published private(set) var isGuestSession = false
     @Published private(set) var currentUserName = ""
     @Published var errorMessage: String?
@@ -86,8 +87,6 @@ final class FamilyViewModel: ObservableObject {
             alerts = recentAlerts
                 .filter { $0.resolvedAt == nil }
                 .sorted { $0.scheduledTime > $1.scheduledTime }
-
-            try await deliverPendingAlertNotificationsIfNeeded()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -155,6 +154,41 @@ final class FamilyViewModel: ObservableObject {
         successMessage = "Davet kodu panoya kopyalandi."
     }
 
+    func removeAlert(_ alert: CareAlert) async {
+        guard let alertId = alert.id else { return }
+
+        isDeletingAlerts = true
+        errorMessage = nil
+
+        do {
+            try await familyStore.removeAlert(alertId: alertId)
+            alerts.removeAll { $0.id == alert.id }
+            successMessage = "Gecikme uyarisi kaldirildi."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isDeletingAlerts = false
+    }
+
+    func clearAllAlerts() async {
+        let alertIds = alerts.compactMap(\.id)
+        guard !alertIds.isEmpty else { return }
+
+        isDeletingAlerts = true
+        errorMessage = nil
+
+        do {
+            try await familyStore.removeAlerts(alertIds: alertIds)
+            alerts = []
+            successMessage = "Tum gecikme uyarilari temizlendi."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isDeletingAlerts = false
+    }
+
     func syncOverdueAlerts(activeUser: LocalUser?, doses: [OverdueDosePayload]) async {
         guard let activeUser, !activeUser.isGuest else { return }
         guard !doses.isEmpty else { return }
@@ -187,36 +221,5 @@ final class FamilyViewModel: ObservableObject {
             name: firebaseUser.displayName ?? "",
             email: firebaseUser.email ?? ""
         )
-    }
-
-    private func deliverPendingAlertNotificationsIfNeeded() async throws {
-        let undeliveredAlerts = alerts.filter { $0.deliveredAt == nil }
-        guard !undeliveredAlerts.isEmpty else { return }
-
-        let didSchedule = try await NotificationManager.shared.scheduleFamilyAlertNotifications(for: undeliveredAlerts)
-        guard didSchedule else { return }
-
-        let alertIds = undeliveredAlerts.compactMap(\.id)
-        try await familyStore.markAlertsDelivered(alertIds)
-
-        alerts = alerts.map { alert in
-            guard let id = alert.id, alertIds.contains(id) else {
-                return alert
-            }
-
-            return CareAlert(
-                id: alert.id,
-                caregiverId: alert.caregiverId,
-                patientId: alert.patientId,
-                patientName: alert.patientName,
-                medicationName: alert.medicationName,
-                dosage: alert.dosage,
-                logId: alert.logId,
-                scheduledTime: alert.scheduledTime,
-                createdAt: alert.createdAt,
-                deliveredAt: Date(),
-                resolvedAt: alert.resolvedAt
-            )
-        }
     }
 }

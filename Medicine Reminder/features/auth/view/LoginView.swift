@@ -26,17 +26,7 @@ struct LoginView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        VStack(alignment: .center, spacing: 12) {
-                            Text("Hos Geldiniz")
-                                .font(.system(size: 32, weight: .medium, design: .rounded))
-                                .foregroundStyle(AppTheme.textPrimary)
-
-                            Image("medicine")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 120, height: 120)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
+                        Spacer(minLength: 88)
 
                         VStack(alignment: .leading, spacing: 18) {
                             AuthField(
@@ -115,7 +105,10 @@ struct LoginView: View {
                                 .stroke(AppTheme.border, lineWidth: 1)
                         )
                         .shadow(color: AppTheme.primary.opacity(0.10), radius: 16, x: 0, y: 10)
+
+                        Spacer(minLength: 24)
                     }
+                    .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height * 0.82)
                     .padding(24)
                 }
             }

@@ -25,7 +25,7 @@ struct FamilyView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
-                    heroCard
+                  
 
                     if let errorMessage = viewModel.errorMessage {
                         messageCard(
@@ -66,25 +66,7 @@ struct FamilyView: View {
         }
     }
 
-    private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Aile takibi")
-                .font(.headline)
-                .foregroundStyle(.white.opacity(0.92))
-
-            Text(viewModel.currentUserName.isEmpty ? "Yakinlarinla baglan" : "\(viewModel.currentUserName) icin takip alani")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-
-            Text("Kod uret, kopyala ve paylas. Aile bireyi bu kodu girdiginde geciken ilaclar icin takip acilir.")
-                .font(.footnote)
-                .foregroundStyle(.white.opacity(0.84))
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.heroGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-    }
+   
 
     private var guestStateCard: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -188,12 +170,12 @@ struct FamilyView: View {
                     await viewModel.redeemInviteCode(activeUser: activeUser)
                 }
             } label: {
-                Text(viewModel.isRedeemingCode ? "Eslestiriliyor..." : "Takibi baslat")
+                Text(viewModel.isRedeemingCode ? "Eslestiriliyor..." : "Kodu Onayla")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
-                    .background(AppTheme.accent)
+                    .background(AppTheme.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .disabled(viewModel.isRedeemingCode)
@@ -263,9 +245,31 @@ struct FamilyView: View {
 
     private var alertsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Geciken ilac uyarilari")
-                .font(.headline)
-                .foregroundStyle(AppTheme.textPrimary)
+            HStack(alignment: .center, spacing: 12) {
+                Text("Geciken ilac uyarilari")
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Spacer(minLength: 0)
+
+                if !viewModel.alerts.isEmpty {
+                    Button {
+                        Task {
+                            await viewModel.clearAllAlerts()
+                        }
+                    } label: {
+                        Text(viewModel.isDeletingAlerts ? "Siliniyor..." : "Tumunu sil")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(AppTheme.danger)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background(AppTheme.danger.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isDeletingAlerts)
+                }
+            }
 
             if viewModel.alerts.isEmpty {
                 Text("Sana iletilmis aktif bir gecikme uyarisi yok.")
@@ -310,6 +314,18 @@ struct FamilyView: View {
                             }
 
                             Spacer(minLength: 0)
+
+                            Button {
+                                Task {
+                                    await viewModel.removeAlert(alert)
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(viewModel.isDeletingAlerts)
                         }
 
                         Text("\(formattedDate(alert.scheduledTime)) dozunda gecikme gorundu.")
@@ -350,14 +366,7 @@ struct FamilyView: View {
             }
 
             Spacer(minLength: 0)
-
-            Text(badge)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(AppTheme.primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(AppTheme.primarySoft.opacity(0.24))
-                .clipShape(Capsule())
+ 
         }
         .padding(18)
         .background(AppTheme.surface)

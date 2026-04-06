@@ -22,6 +22,7 @@ struct DoseConfirmationSheet: View {
     @State private var showSuccessState = false
 
     private let familyStore = FamilyStore()
+    private let medicationLogStore = MedicationLogStore()
 
     let logId: String
 
@@ -274,6 +275,7 @@ struct DoseConfirmationSheet: View {
 
             Task {
                 try? await familyStore.resolveAlerts(for: logId)
+                try? await medicationLogStore.markLogTaken(log: medicationLog)
             }
 
             withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {

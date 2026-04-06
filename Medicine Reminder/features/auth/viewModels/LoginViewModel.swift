@@ -50,6 +50,8 @@ final class LoginViewModel: ObservableObject {
                 displayName: sessionName,
                 modelContext: modelContext
             )
+
+            await DeviceTokenStore.shared.syncCurrentDeviceTokenIfPossible()
         } catch {
             errorMessage = error.localizedDescription
             isLoggedIn = false
@@ -84,6 +86,8 @@ final class LoginViewModel: ObservableObject {
                         displayName: sessionName,
                         modelContext: modelContext
                     )
+
+                    await DeviceTokenStore.shared.syncCurrentDeviceTokenIfPossible()
                     return
                 }
 

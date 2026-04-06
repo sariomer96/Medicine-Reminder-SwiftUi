@@ -22,9 +22,14 @@ final class AddMedicationViewModel: ObservableObject {
 
     private var hasLoadedMedicationNames = false
     private let medicationStore: MedicationStore
+    private let medicationLogStore: MedicationLogStore
 
-    init(medicationStore: MedicationStore = MedicationStore()) {
+    init(
+        medicationStore: MedicationStore = MedicationStore(),
+        medicationLogStore: MedicationLogStore = MedicationLogStore()
+    ) {
         self.medicationStore = medicationStore
+        self.medicationLogStore = medicationLogStore
     }
 
     var filteredMedications: [String] {
@@ -135,18 +140,33 @@ final class AddMedicationViewModel: ObservableObject {
                 return
             }
 
-            try await medicationStore.saveMedication(
-                documentId: medicationId,
-                userId: activeUser.userId,
-                name: trimmedMedicationName,
-                dosage: "",
-                selectedWeekdays: selectedWeekdays,
-                reminderTimes: reminderTimes,
-                updatedAt: localMedication.updatedAt,
-                version: Int(localMedication.version),
-                isDeleted: localMedication.deletedFlag
-            )
             saveSucceeded = true
+            isSaving = false
+
+            Task {
+                do {
+                    try await medicationStore.saveMedication(
+                        documentId: medicationId,
+                        userId: activeUser.userId,
+                        name: trimmedMedicationName,
+                        dosage: "",
+                        selectedWeekdays: selectedWeekdays,
+                        reminderTimes: reminderTimes,
+                        updatedAt: localMedication.updatedAt,
+                        version: Int(localMedication.version),
+                        isDeleted: localMedication.deletedFlag
+                    )
+                    try await medicationLogStore.syncUpcomingLogs(
+                        medication: localMedication,
+                        logs: upcomingLogs
+                    )
+                } catch {
+                    await MainActor.run {
+                        self.infoMessage = "Ilac kaydedildi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                    }
+                }
+            }
+            return
         } catch {
             errorMessage = saveFailureMessage(for: error, localSaveCompleted: localSaveCompleted, isGuest: activeUser.isGuest)
             saveSucceeded = false

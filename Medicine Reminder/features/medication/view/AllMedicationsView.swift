@@ -25,6 +25,7 @@ struct AllMedicationsView: View {
     @State private var draftReminderTimes: [Date] = []
 
     private let medicationStore = MedicationStore()
+    private let medicationLogStore = MedicationLogStore()
 
     private let weekdayOrder = [2, 3, 4, 5, 6, 7, 1]
     private let weekdayTitles = [
@@ -76,7 +77,7 @@ struct AllMedicationsView: View {
                     if visibleMedications.isEmpty {
                         emptyState
                     } else {
-                        overviewCard
+              
 
                         ForEach(visibleMedications) { medication in
                             medicationCard(for: medication)
@@ -134,26 +135,7 @@ struct AllMedicationsView: View {
         .padding(24)
     }
 
-    private var overviewCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Ilac planlarin")
-                .font(.headline)
-                .foregroundStyle(.white.opacity(0.92))
-
-            Text("\(visibleMedications.count) aktif ilac")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-
-            Text("Gunleri ve saatleri buradan duzenleyebilir, artik kullanmadigin ilaclari kaldirabilirsin.")
-                .font(.footnote)
-                .foregroundStyle(.white.opacity(0.82))
-        }
-        .padding(22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.heroGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-    }
-
+   
     private func medicationCard(for medication: LocalMedication) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 12) {
@@ -440,17 +422,29 @@ struct AllMedicationsView: View {
             )
 
             if activeUser?.isGuest != true {
-                try await medicationStore.saveMedication(
-                    documentId: medication.medicationId,
-                    userId: medication.userId,
-                    name: medication.name,
-                    dosage: medication.dosage,
-                    selectedWeekdays: medication.selectedWeekdays,
-                    reminderTimes: medication.reminderTimes,
-                    updatedAt: medication.updatedAt,
-                    version: Int(medication.version),
-                    isDeleted: medication.deletedFlag
-                )
+                Task {
+                    do {
+                        try await medicationStore.saveMedication(
+                            documentId: medication.medicationId,
+                            userId: medication.userId,
+                            name: medication.name,
+                            dosage: medication.dosage,
+                            selectedWeekdays: medication.selectedWeekdays,
+                            reminderTimes: medication.reminderTimes,
+                            updatedAt: medication.updatedAt,
+                            version: Int(medication.version),
+                            isDeleted: medication.deletedFlag
+                        )
+                        try await medicationLogStore.syncUpcomingLogs(
+                            medication: medication,
+                            logs: medicationLogs
+                        )
+                    } catch {
+                        await MainActor.run {
+                            self.errorMessage = "Ilac guncellendi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                        }
+                    }
+                }
             }
 
             medicationBeingEdited = nil
@@ -490,12 +484,24 @@ struct AllMedicationsView: View {
             try modelContext.save()
 
             if activeUser?.isGuest != true {
-                try await medicationStore.deleteMedication(
-                    documentId: medicationId,
-                    userId: userId,
-                    updatedAt: deletionDate,
-                    version: Int(nextVersion)
-                )
+                Task {
+                    do {
+                        try await medicationStore.deleteMedication(
+                            documentId: medicationId,
+                            userId: userId,
+                            updatedAt: deletionDate,
+                            version: Int(nextVersion)
+                        )
+                        try await medicationLogStore.markMedicationDeleted(
+                            medicationId: medicationId,
+                            userId: userId
+                        )
+                    } catch {
+                        await MainActor.run {
+                            self.errorMessage = "Ilac kaldirildi, ama bulut senkronu arka planda tamamlanamadi: \(error.localizedDescription)"
+                        }
+                    }
+                }
             }
 
             medicationPendingDeletionId = nil

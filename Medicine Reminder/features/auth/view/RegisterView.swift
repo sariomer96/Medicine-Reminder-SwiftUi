@@ -22,12 +22,7 @@ struct RegisterView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .center) {
-                  
-                    Image("medicine")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                   
                      
                     VStack(alignment: .leading, spacing: 18) {
                         AuthField(
@@ -107,6 +102,22 @@ struct RegisterView: View {
         .onChange(of: viewModel.isRegistered) { isRegistered in
             if isRegistered {
                 dismiss()
+            }
+        }
+        .navigationTitle("Kayit Ol")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                        Text("Geri")
+                    }
+                    .foregroundStyle(AppTheme.primary)
+                }
             }
         }
         .dismissKeyboardOnTap()
