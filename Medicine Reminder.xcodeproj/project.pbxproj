@@ -16,11 +16,14 @@
 		175171F92F74741F004DBD18 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 175171F82F74741F004DBD18 /* FirebaseAuth */; };
 		17C0D24A2FA1A00100ABCDEF /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 17C0D2492FA1A00100ABCDEF /* FirebaseMessaging */; };
 		17C0D24C2FA1A00200ABCDEF /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 17C0D24B2FA1A00200ABCDEF /* FirebaseFunctions */; };
+		17DE5A7F2F8916170090D2C3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 17DE5A7D2F8916170090D2C3 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		175171172F73F40C004DBD18 /* Medicine Reminder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Medicine Reminder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1751713E2F74205D004DBD18 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		17DE5A7E2F8916170090D2C3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		17DE5A802F89162A0090D2C3 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -53,6 +56,7 @@
 		1751710E2F73F40C004DBD18 = {
 			isa = PBXGroup;
 			children = (
+				17DE5A7D2F8916170090D2C3 /* InfoPlist.strings */,
 				175171192F73F40C004DBD18 /* Medicine Reminder */,
 				175171182F73F40C004DBD18 /* Products */,
 				1751713E2F74205D004DBD18 /* GoogleService-Info.plist */,
@@ -152,6 +156,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17DE5A7F2F8916170090D2C3 /* InfoPlist.strings in Resources */,
 				1751713F2F74205D004DBD18 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -167,6 +172,18 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		17DE5A7D2F8916170090D2C3 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				17DE5A7E2F8916170090D2C3 /* en */,
+				17DE5A802F89162A0090D2C3 /* tr */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		175171222F73F40E004DBD18 /* Debug */ = {
@@ -314,7 +331,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "sariomer.Medicine-Reminder";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -323,7 +340,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -351,7 +368,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "sariomer.Medicine-Reminder";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -360,7 +377,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

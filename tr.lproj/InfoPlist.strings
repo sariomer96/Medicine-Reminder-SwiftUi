@@ -1,0 +1,10 @@
+/* 
+  InfoPlist.strings
+  Medicine Reminder
+
+  Created by Omer on 10.04.2026.
+  
+*/
+
+CFBundleDisplayName = "Pill Tracker";
+CFBundleDisplayName = "İlaç Vakti+";
