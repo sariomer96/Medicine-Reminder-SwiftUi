@@ -24,6 +24,9 @@
 		1751713E2F74205D004DBD18 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		17DE5A7E2F8916170090D2C3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		17DE5A802F89162A0090D2C3 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		7A11B2C13E00000100DE0001 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		7A11B2C13E00000200DE0002 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		7A11B2C13E00000300DE0003 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -133,6 +136,9 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
+				es,
+				fr,
 				tr,
 			);
 			mainGroup = 1751710E2F73F40C004DBD18;
@@ -178,6 +184,9 @@
 			isa = PBXVariantGroup;
 			children = (
 				17DE5A7E2F8916170090D2C3 /* en */,
+				7A11B2C13E00000100DE0001 /* de */,
+				7A11B2C13E00000300DE0003 /* es */,
+				7A11B2C13E00000200DE0002 /* fr */,
 				17DE5A802F89162A0090D2C3 /* tr */,
 			);
 			name = InfoPlist.strings;

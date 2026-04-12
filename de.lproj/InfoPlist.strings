@@ -1,0 +1,6 @@
+/* 
+  InfoPlist.strings
+  Medicine Reminder
+*/
+
+CFBundleDisplayName = "Pill Tracker";
