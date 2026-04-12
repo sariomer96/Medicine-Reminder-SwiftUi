@@ -278,6 +278,8 @@ struct DoseConfirmationSheet: View {
                 try? await medicationLogStore.markLogTaken(log: medicationLog)
             }
 
+            ReviewPromptCoordinator.shared.recordDoseConfirmed()
+
             withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
                 showSuccessState = true
             }

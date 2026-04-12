@@ -185,3 +185,8 @@
 "notification.family_alert_title" = "Uberfalliges Medikament fur %@";
 "notification.family_alert_body_default" = "Die Dosis %@ ist uberfallig. Vielleicht solltest du nachsehen.";
 "notification.family_alert_body_dosage" = "%@ • Die Dosis %@ ist uberfallig.";
+
+"review.prompt.title" = "Gefallt dir Pill Tracker?";
+"review.prompt.message" = "Wenn Pill Tracker dir hilft, den Uberblick zu behalten, wurdest du die App bitte bewerten?";
+"review.prompt.primary" = "Jetzt bewerten";
+"review.prompt.secondary" = "Spater";

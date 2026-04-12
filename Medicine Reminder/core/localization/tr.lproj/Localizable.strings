@@ -185,3 +185,8 @@
 "notification.family_alert_title" = "%@ için geciken ilaç";
 "notification.family_alert_body_default" = "%@ dozu gecikti. Kontrol etmek isteyebilirsin.";
 "notification.family_alert_body_dosage" = "%@ • %@ dozu gecikti.";
+
+"review.prompt.title" = "Pill Tracker'i beğeniyor musun?";
+"review.prompt.message" = "Pill Tracker ilaç takibini kolaylaştırıyorsa uygulamayı puanlamak ister misin?";
+"review.prompt.primary" = "Şimdi Puanla";
+"review.prompt.secondary" = "Daha Sonra";

@@ -185,3 +185,8 @@
 "notification.family_alert_title" = "Medicament en retard pour %@";
 "notification.family_alert_body_default" = "La dose de %@ est en retard. Vous devriez peut-etre verifier.";
 "notification.family_alert_body_dosage" = "%@ • La dose de %@ est en retard.";
+
+"review.prompt.title" = "Pill Tracker vous plait ?";
+"review.prompt.message" = "Si Pill Tracker vous aide a rester organise, accepteriez-vous de noter l'application ?";
+"review.prompt.primary" = "Noter maintenant";
+"review.prompt.secondary" = "Plus tard";

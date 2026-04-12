@@ -185,3 +185,8 @@
 "notification.family_alert_title" = "Medicamento atrasado para %@";
 "notification.family_alert_body_default" = "La dosis de %@ esta atrasada. Tal vez quieras comprobarlo.";
 "notification.family_alert_body_dosage" = "%@ • La dosis de %@ esta atrasada.";
+
+"review.prompt.title" = "Te gusta Pill Tracker?";
+"review.prompt.message" = "Si Pill Tracker te esta ayudando a seguir tu rutina, te importaria valorar la app?";
+"review.prompt.primary" = "Valorar ahora";
+"review.prompt.secondary" = "Mas tarde";

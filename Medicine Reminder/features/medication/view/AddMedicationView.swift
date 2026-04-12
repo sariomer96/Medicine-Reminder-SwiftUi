@@ -279,6 +279,7 @@ struct AddMedicationView: View {
                 )
 
                 if viewModel.saveSucceeded {
+                    ReviewPromptCoordinator.shared.recordMedicationCreated()
                     dismiss()
                 }
             }

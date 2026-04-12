@@ -29,6 +29,7 @@ private struct AppRootView: View {
     @Environment(\.managedObjectContext) private var modelContext
     @AppStorage("app.hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("app.hasRequestedNotificationPermission") private var hasRequestedNotificationPermission = false
+    private let reviewPromptCoordinator = ReviewPromptCoordinator.shared
     @State private var isCheckingSession = true
     @State private var hasActiveSession = false
     @State private var sessionDisplayName = ""
@@ -76,6 +77,7 @@ private struct AppRootView: View {
         .animation(.easeInOut(duration: 0.25), value: isCheckingSession)
         .animation(.easeInOut(duration: 0.25), value: hasActiveSession)
         .task {
+            reviewPromptCoordinator.registerInstallIfNeeded()
             guard !hasRequestedNotificationPermission else { return }
             hasRequestedNotificationPermission = true
             _ = try? await NotificationManager.shared.requestAuthorizationIfNeeded()

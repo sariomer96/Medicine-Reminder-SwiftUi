@@ -185,3 +185,8 @@
 "notification.family_alert_title" = "Overdue medication for %@";
 "notification.family_alert_body_default" = "%@ dose is overdue. You may want to check in.";
 "notification.family_alert_body_dosage" = "%@ • %@ dose is overdue.";
+
+"review.prompt.title" = "Enjoying Pill Tracker?";
+"review.prompt.message" = "If Pill Tracker is helping you stay on track, would you mind rating the app?";
+"review.prompt.primary" = "Rate Now";
+"review.prompt.secondary" = "Later";

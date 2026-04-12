@@ -8,9 +8,11 @@
 import SwiftUI
 import CoreData
 import Combine
+import StoreKit
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var modelContext
+    @Environment(\.requestReview) private var requestReview
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var notificationRouteStore: NotificationRouteStore
@@ -24,6 +26,7 @@ struct HomeView: View {
 
     @StateObject private var viewModel = HomeViewModel()
     @StateObject private var familyViewModel = FamilyViewModel()
+    @StateObject private var reviewPromptCoordinator = ReviewPromptCoordinator.shared
     @State private var refreshDate = Date()
     let sessionDisplayName: String
     let onSessionEnded: () -> Void
@@ -178,21 +181,48 @@ struct HomeView: View {
                 }
             }
         }
+        .alert(
+            L10n.string("review.prompt.title"),
+            isPresented: Binding(
+                get: { reviewPromptCoordinator.shouldShowPrompt && notificationRouteStore.pendingDoseTarget == nil },
+                set: { isPresented in
+                    if !isPresented && reviewPromptCoordinator.shouldShowPrompt {
+                        reviewPromptCoordinator.deferPrompt()
+                    }
+                }
+            )
+        ) {
+            Button(L10n.string("review.prompt.primary")) {
+                reviewPromptCoordinator.requestReview(using: requestReview)
+            }
+
+            Button(L10n.string("review.prompt.secondary"), role: .cancel) {
+                reviewPromptCoordinator.deferPrompt()
+            }
+        } message: {
+            Text(L10n.string("review.prompt.message"))
+        }
         .onAppear {
             refreshDate = Date()
+            reviewPromptCoordinator.recordAppOpen()
             Task {
                 await syncFamilyState()
             }
+            reviewPromptCoordinator.evaluatePromptEligibility()
         }
         .onChange(of: scenePhase) { newPhase in
             guard newPhase == .active else { return }
 
+            reviewPromptCoordinator.recordAppOpen()
             Task {
                 await syncFamilyState()
             }
+            reviewPromptCoordinator.evaluatePromptEligibility()
         }
         .onChange(of: notificationRouteStore.pendingDoseTarget?.id) { _ in
             refreshDate = Date()
+            guard notificationRouteStore.pendingDoseTarget == nil else { return }
+            reviewPromptCoordinator.evaluatePromptEligibility()
         }
         .onReceive(familySyncTimer) { _ in
             Task {
