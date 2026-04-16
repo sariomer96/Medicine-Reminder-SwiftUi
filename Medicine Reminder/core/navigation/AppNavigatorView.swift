@@ -72,6 +72,7 @@ struct AppNavigatorView: View {
             DoseConfirmationSheet(logId: target.logId)
         }
     }
+
 }
 
 #Preview {

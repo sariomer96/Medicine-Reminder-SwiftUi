@@ -7,6 +7,7 @@
 
 import Foundation
 import StoreKit
+import UIKit
 
 @MainActor
 final class ReviewPromptCoordinator: ObservableObject {
@@ -67,13 +68,18 @@ final class ReviewPromptCoordinator: ObservableObject {
         defaults.set(snoozeUntil, forKey: Keys.snoozeUntil)
     }
 
-    func requestReview(using requestReview: RequestReviewAction) {
+    func requestReview() {
         let now = nowProvider()
         shouldShowPrompt = false
         defaults.set(now, forKey: Keys.lastPromptDate)
         defaults.set(currentAppVersion, forKey: Keys.lastPromptVersion)
         defaults.removeObject(forKey: Keys.snoozeUntil)
-        requestReview()
+
+        if let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) {
+            SKStoreReviewController.requestReview(in: windowScene)
+        }
     }
 
     private func isEligibleToPrompt(now: Date) -> Bool {

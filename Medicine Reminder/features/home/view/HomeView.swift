@@ -8,11 +8,9 @@
 import SwiftUI
 import CoreData
 import Combine
-import StoreKit
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var modelContext
-    @Environment(\.requestReview) private var requestReview
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var notificationRouteStore: NotificationRouteStore
@@ -32,100 +30,15 @@ struct HomeView: View {
     let onSessionEnded: () -> Void
     private let familySyncTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
-    private var activeUser: LocalUser? {
-        users.first(where: \.isActive)
-    }
-
-    private var visibleMedications: [LocalMedication] {
-        guard let activeUser else { return [] }
-
-        return medications.filter {
-            $0.userId == activeUser.userId && !$0.deletedFlag
-        }
-    }
-
-    private var shouldShowFamilySection: Bool {
-        activeUser?.isGuest == false
-    }
-
-    private func nextDoseInfo(asOf now: Date) -> NextDoseInfo? {
-        guard let activeUser else { return nil }
-
-        let medicationMap = Dictionary(
-            uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
-        )
-
-        let upcomingLogs = medicationLogs
-            .filter {
-                $0.userId == activeUser.userId
-                    && !$0.taken
-                    && $0.scheduledTime >= now
-                    && medicationMap[$0.medicationId] != nil
-            }
-            .sorted { $0.scheduledTime < $1.scheduledTime }
-
-        guard let firstLog = upcomingLogs.first else {
-            return nil
-        }
-
-        let groupedLogs = upcomingLogs.filter {
-            $0.scheduledTime == firstLog.scheduledTime
-        }
-
-        let items = groupedLogs.compactMap { log in
-            medicationMap[log.medicationId].map { medication in
-                let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmedDosage.isEmpty ? medication.name : "\(medication.name) • \(trimmedDosage)"
-            }
-        }
-
-        return NextDoseInfo(
-            logId: firstLog.logId,
-            scheduledTime: firstLog.scheduledTime,
-            items: items
-        )
-    }
-
-    private func pendingDoseInfos(asOf now: Date) -> [PendingDoseInfo] {
-        guard let activeUser else { return [] }
-
-        let medicationMap = Dictionary(
-            uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
-        )
-        let fifteenMinutesAgo = Calendar.current.date(byAdding: .minute, value: -15, to: now) ?? now
-
-        return medicationLogs
-            .filter {
-                $0.userId == activeUser.userId
-                    && !$0.taken
-                    && $0.scheduledTime <= now
-                    && $0.scheduledTime >= fifteenMinutesAgo
-                    && medicationMap[$0.medicationId] != nil
-            }
-            .sorted { $0.scheduledTime < $1.scheduledTime }
-            .prefix(4)
-            .compactMap { log in
-                guard let medication = medicationMap[log.medicationId] else {
-                    return nil
-                }
-
-                let trimmedDosage = medication.dosage.trimmingCharacters(in: .whitespacesAndNewlines)
-                let subtitle = trimmedDosage.isEmpty ? medication.name : "\(medication.name) • \(trimmedDosage)"
-
-                return PendingDoseInfo(
-                    logId: log.logId,
-                    scheduledTime: log.scheduledTime,
-                    title: medication.name,
-                    subtitle: subtitle
-                )
-            }
-    }
-
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             let effectiveDate = max(context.date, refreshDate)
-            let currentNextDose = nextDoseInfo(asOf: effectiveDate)
-            let pendingDoses = pendingDoseInfos(asOf: effectiveDate)
+            let content = viewModel.makeContent(
+                asOf: effectiveDate,
+                users: users,
+                medications: medications,
+                medicationLogs: medicationLogs
+            )
 
             ZStack {
                 AppTheme.appBackground
@@ -141,9 +54,9 @@ struct HomeView: View {
                                 .foregroundStyle(.red)
                         }
 
-                        nextDoseSection(nextDoseInfo: currentNextDose)
-                        pendingDosesSection(pendingDoses)
-                        if shouldShowFamilySection {
+                        nextDoseSection(nextDoseInfo: content.nextDoseInfo)
+                        pendingDosesSection(content.pendingDoses)
+                        if content.shouldShowFamilySection {
                             familySection
                         }
 
@@ -193,7 +106,7 @@ struct HomeView: View {
             )
         ) {
             Button(L10n.string("review.prompt.primary")) {
-                reviewPromptCoordinator.requestReview(using: requestReview)
+                reviewPromptCoordinator.requestReview()
             }
 
             Button(L10n.string("review.prompt.secondary"), role: .cancel) {
@@ -206,7 +119,13 @@ struct HomeView: View {
             refreshDate = Date()
             reviewPromptCoordinator.recordAppOpen()
             Task {
-                await syncFamilyState()
+                let content = viewModel.makeContent(
+                    asOf: refreshDate,
+                    users: users,
+                    medications: medications,
+                    medicationLogs: medicationLogs
+                )
+                await viewModel.syncFamilyState(for: content, familyViewModel: familyViewModel)
             }
             reviewPromptCoordinator.evaluatePromptEligibility()
         }
@@ -215,7 +134,13 @@ struct HomeView: View {
 
             reviewPromptCoordinator.recordAppOpen()
             Task {
-                await syncFamilyState()
+                let content = viewModel.makeContent(
+                    asOf: Date(),
+                    users: users,
+                    medications: medications,
+                    medicationLogs: medicationLogs
+                )
+                await viewModel.syncFamilyState(for: content, familyViewModel: familyViewModel)
             }
             reviewPromptCoordinator.evaluatePromptEligibility()
         }
@@ -226,7 +151,13 @@ struct HomeView: View {
         }
         .onReceive(familySyncTimer) { _ in
             Task {
-                await syncFamilyState()
+                let content = viewModel.makeContent(
+                    asOf: Date(),
+                    users: users,
+                    medications: medications,
+                    medicationLogs: medicationLogs
+                )
+                await viewModel.syncFamilyState(for: content, familyViewModel: familyViewModel)
             }
         }
     }
@@ -307,40 +238,6 @@ struct HomeView: View {
         .padding(14)
         .background(AppTheme.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    private func overdueDosePayloads(asOf now: Date) -> [OverdueDosePayload] {
-        guard let activeUser else { return [] }
-
-        let medicationMap = Dictionary(
-            uniqueKeysWithValues: visibleMedications.map { ($0.medicationId, $0) }
-        )
-        let familyAlertThreshold = Calendar.current.date(byAdding: .minute, value: -10, to: now) ?? now
-        let lookbackDate = Calendar.current.date(byAdding: .hour, value: -24, to: now) ?? now
-
-        return medicationLogs
-            .filter {
-                $0.userId == activeUser.userId
-                    && !$0.taken
-                    && $0.scheduledTime <= familyAlertThreshold
-                    && $0.scheduledTime >= lookbackDate
-                    && medicationMap[$0.medicationId] != nil
-            }
-            .map { log in
-                let medication = medicationMap[log.medicationId]
-                return OverdueDosePayload(
-                    logId: log.logId,
-                    medicationName: medication?.name ?? L10n.string("home.default_medication_name"),
-                    dosage: medication?.dosage ?? "",
-                    scheduledTime: log.scheduledTime
-                )
-            }
-    }
-
-    private func syncFamilyState() async {
-        guard shouldShowFamilySection else { return }
-
-        await familyViewModel.load(activeUser: activeUser)
     }
 
     private var greetingCard: some View {
@@ -635,21 +532,6 @@ struct HomeView: View {
         )
     }
 
-}
-
-private struct NextDoseInfo {
-    let logId: String
-    let scheduledTime: Date
-    let items: [String]
-}
-
-private struct PendingDoseInfo: Identifiable {
-    let logId: String
-    let scheduledTime: Date
-    let title: String
-    let subtitle: String
-
-    var id: String { logId }
 }
 
 #Preview {
